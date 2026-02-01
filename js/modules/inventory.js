@@ -1,5 +1,4 @@
 import Database from './database.js';
-import { Modal, Toast } from './ui.js';
 
 const InventoryModule = {
     render() {
@@ -42,45 +41,40 @@ const InventoryModule = {
     },
 
     showAddModal() {
-    window.Modal.open(`
-        <div class="p-6">
-            <h3 class="text-xl font-bold mb-4">Нова запчастина</h3>
-            <form onsubmit="window.saveNewPart(event)" class="space-y-4">
-                <input type="text" id="partName" placeholder="Назва" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
-                <input type="text" id="partSku" placeholder="Артикул" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
-                <input type="text" id="partCategory" placeholder="Категорія" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
-                <div class="grid grid-cols-3 gap-4">
-                    <input type="number" id="partQty" placeholder="К-ть" required class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
-                    <input type="number" id="partCost" placeholder="Собів." required class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
-                    <input type="number" id="partPrice" placeholder="Ціна" required class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
-                </div>
-                <div class="flex gap-3 mt-6">
-                    <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 py-2 rounded-lg text-white">Зберегти</button>
-                    <button type="button" onclick="window.Modal.close()" class="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-700">Скасувати</button>
-                </div>
-            </form>
-        </div>
-    `);
-}
-    save() {
-        const data = {
+        window.Modal.open(`
+            <div class="p-6">
+                <h3 class="text-xl font-bold mb-4">Нова запчастина</h3>
+                <form onsubmit="window.saveNewPart(event)" class="space-y-4">
+                    <input type="text" id="partName" placeholder="Назва" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
+                    <input type="text" id="partSku" placeholder="Артикул" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
+                    <input type="text" id="partCategory" placeholder="Категорія" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
+                    <div class="grid grid-cols-3 gap-4">
+                        <input type="number" id="partQty" placeholder="К-ть" required class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
+                        <input type="number" id="partCost" placeholder="Собів." required class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
+                        <input type="number" id="partPrice" placeholder="Ціна" required class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
+                    </div>
+                    <div class="flex gap-3 mt-6">
+                        <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 py-2 rounded-lg text-white font-semibold">Зберегти</button>
+                        <button type="button" onclick="window.Modal.close()" class="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-700 transition-colors">Скасувати</button>
+                    </div>
+                </form>
+            </div>
+        `);
+    },
+
+    save(e) {
+        e.preventDefault();
+        Database.create('inventory', {
             name: document.getElementById('partName').value,
             sku: document.getElementById('partSku').value,
             category: document.getElementById('partCategory').value,
             qty: parseInt(document.getElementById('partQty').value) || 0,
             cost: parseFloat(document.getElementById('partCost').value) || 0,
             price: parseFloat(document.getElementById('partPrice').value) || 0
-        };
-        
-        if (!data.name || !data.sku) {
-            Toast.show('Заповніть назву та артикул', 'error');
-            return;
-        }
-        
-        Database.create('inventory', data);
-        Modal.close();
-        Toast.show('Запчастину додано', 'success');
-        window.refreshCurrentPage();
+        });
+        window.Modal.close();
+        window.Toast.show('Запчастину додано', 'success');
+        import('./router.js').then(m => m.default.navigate('inventory'));
     },
 
     deduct(partId, qty) {
@@ -102,9 +96,7 @@ const InventoryModule = {
     }
 };
 
-// Глобальні функції
 window.openAddPartModal = () => InventoryModule.showAddModal();
-window.saveNewPart = () => InventoryModule.save();
-
+window.saveNewPart = (e) => InventoryModule.save(e);
 
 export default InventoryModule;
