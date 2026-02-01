@@ -36,4 +36,8 @@ export const Toast = {
         document.body.appendChild(toast);
         setTimeout(() => toast.remove(), 3000);
     }
+
 };
+// Робимо Modal глобальним
+window.Modal = { open: Modal.open, close: Modal.close };
+export { Modal, Toast };
