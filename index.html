@@ -1,41 +1,188 @@
 <!DOCTYPE html>
-<html lang="uk" class="dark">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ServicePro CRM - Модульна система</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>ServicePro CRM</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    
-    <!-- Chart.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     
-    <!-- Styles -->
-    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        
+        body { 
+            font-family: 'Inter', sans-serif;
+            touch-action: pan-y pinch-zoom;
+            overflow-x: hidden;
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .mobile-card {
+                @apply bg-gray-800 rounded-lg p-4 mb-3 border border-gray-700;
+            }
+            
+            .mobile-btn {
+                @apply w-full py-3 text-base font-medium;
+                min-height: 44px; /* iOS touch target */
+            }
+            
+            .touch-target {
+                min-height: 44px;
+                min-width: 44px;
+            }
+            
+            /* Fix for iOS input zoom */
+            input, select, textarea {
+                font-size: 16px !important;
+            }
+            
+            /* Bottom safe area for iPhone X+ */
+            .safe-bottom {
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+        }
+        
+        /* Custom scrollbar mobile */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 2px;
+        }
+        
+        /* Pull-to-refresh indicator */
+        .ptr-indicator {
+            @apply fixed top-0 left-0 right-0 h-16 flex items-center justify-center -translate-y-full transition-transform z-50;
+        }
+        
+        .ptr-indicator.visible {
+            @apply translate-y-0;
+        }
+        
+        /* Mobile swipe gestures */
+        .swipe-action {
+            @apply relative overflow-hidden;
+        }
+        
+        .swipe-action::after {
+            content: '';
+            @apply absolute inset-y-0 right-0 w-20 bg-red-500 flex items-center justify-center;
+            transform: translateX(100%);
+            transition: transform 0.2s;
+        }
+        
+        .swipe-action.swiped::after {
+            transform: translateX(0);
+        }
+        
+        /* Glass effect optimized for mobile */
+        .glass {
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        @media (max-width: 768px) {
+            .glass {
+                background: rgba(30, 41, 59, 0.98);
+            }
+        }
+        
+        /* Fixed mobile bottom nav */
+        .mobile-nav {
+            @apply fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 flex justify-around items-center py-2 px-4 z-40;
+            padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+        }
+        
+        .mobile-nav-item {
+            @apply flex flex-col items-center justify-center text-gray-400 text-xs py-1 px-3 rounded-lg transition-colors;
+            min-width: 64px;
+        }
+        
+        .mobile-nav-item.active {
+            @apply text-blue-500 bg-blue-500/10;
+        }
+        
+        .mobile-nav-item i {
+            @apply text-lg mb-1;
+        }
+        
+        /* Responsive tables */
+        @media (max-width: 768px) {
+            .responsive-table {
+                @apply block;
+            }
+            
+            .responsive-table thead {
+                @apply hidden;
+            }
+            
+            .responsive-table tbody {
+                @apply block;
+            }
+            
+            .responsive-table tr {
+                @apply block mb-4 bg-gray-800 rounded-lg border border-gray-700 overflow-hidden;
+            }
+            
+            .responsive-table td {
+                @apply block p-3 border-b border-gray-700 last:border-0;
+                text-align: right !important;
+                position: relative;
+                padding-left: 50% !important;
+            }
+            
+            .responsive-table td::before {
+                content: attr(data-label);
+                @apply absolute left-3 top-3 text-gray-400 font-medium text-sm;
+                text-align: left;
+            }
+        }
+    </style>
 </head>
 <body class="bg-gray-900 text-gray-100 antialiased">
-    
-    <!-- Модуль Авторизації -->
-    <div id="authModule" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-950">
-        <div class="glass p-8 rounded-2xl w-full max-w-md fade-in">
-            <div class="text-center mb-8">
-                <div class="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-tools text-3xl text-blue-500"></i>
+
+    <!-- Pull to refresh indicator -->
+    <div class="ptr-indicator" id="ptrIndicator">
+        <i class="fas fa-sync-alt fa-spin text-blue-500 text-xl"></i>
+    </div>
+
+    <!-- Авторизація -->
+    <div id="authModule" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-950 p-4">
+        <div class="glass p-6 md:p-8 rounded-2xl w-full max-w-md fade-in mx-4">
+            <div class="text-center mb-6 md:mb-8">
+                <div class="w-16 h-16 md:w-20 md:h-20 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-tools text-2xl md:text-3xl text-blue-500"></i>
                 </div>
-                <h1 class="text-2xl font-bold">ServicePro CRM</h1>
-                <p class="text-gray-400 mt-2">Модульна система управління</p>
+                <h1 class="text-xl md:text-2xl font-bold">ServicePro CRM</h1>
+                <p class="text-gray-400 mt-2 text-sm md:text-base">Система управління сервісом</p>
             </div>
             <div class="space-y-4">
-                <select id="authRole" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none">
+                <select id="authRole" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-base focus:border-blue-500 focus:outline-none touch-target">
                     <option value="admin">Адміністратор</option>
                     <option value="manager">Менеджер</option>
                     <option value="technician">Майстер</option>
                 </select>
-                <button onclick="App.init()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-all">
+                <button onclick="App.init()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-all touch-target mobile-btn">
                     Увійти в систему
                 </button>
             </div>
@@ -43,9 +190,10 @@
     </div>
 
     <!-- Головний інтерфейс -->
-    <div id="mainInterface" class="hidden h-screen flex">
-        <!-- Sidebar -->
-        <aside class="w-64 bg-gray-800 border-r border-gray-700 flex flex-col no-print">
+    <div id="mainInterface" class="hidden min-h-screen pb-20 md:pb-0">
+        
+        <!-- Desktop Sidebar / Mobile Header -->
+        <aside class="hidden md:flex w-64 bg-gray-800 border-r border-gray-700 flex-col fixed h-full z-30">
             <div class="p-6 border-b border-gray-700">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -57,33 +205,64 @@
                     </div>
                 </div>
             </div>
-            
-            <nav class="flex-1 p-4 space-y-1" id="navigation">
-                <!-- Навігація генерується динамічно -->
-            </nav>
-            
+            <nav class="flex-1 p-4 space-y-1 overflow-y-auto" id="desktopNav"></nav>
             <div class="p-4 border-t border-gray-700">
-                <button onclick="Database.export()" class="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">
+                <button onclick="Database.export()" class="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-400 hover:text-white">
                     <i class="fas fa-download"></i><span>Експорт БД</span>
-                </button>
-                <button onclick="location.reload()" class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:text-red-300 transition-colors mt-2">
-                    <i class="fas fa-sign-out-alt"></i><span>Вийти</span>
                 </button>
             </div>
         </aside>
 
+        <!-- Mobile Header -->
+        <header class="md:hidden fixed top-0 left-0 right-0 bg-gray-800/95 backdrop-blur border-b border-gray-700 z-30 px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center">
+                    <i class="fas fa-wrench text-white text-sm"></i>
+                </div>
+                <span class="font-bold">ServicePro</span>
+            </div>
+            <button onclick="location.reload()" class="text-gray-400 p-2">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </header>
+
         <!-- Контент -->
-        <main class="flex-1 overflow-y-auto bg-gray-900 p-8" id="contentArea">
-            <!-- Динамічний контент -->
+        <main class="md:ml-64 pt-16 md:pt-0 min-h-screen">
+            <div id="contentArea" class="p-4 md:p-8 max-w-7xl mx-auto"></div>
         </main>
+
+        <!-- Mobile Bottom Navigation -->
+        <nav class="mobile-nav md:hidden">
+            <button class="mobile-nav-item active" onclick="window.navigateTo('dashboard')" data-route="dashboard">
+                <i class="fas fa-chart-line"></i>
+                <span>Головна</span>
+            </button>
+            <button class="mobile-nav-item" onclick="window.navigateTo('orders')" data-route="orders">
+                <i class="fas fa-clipboard-list"></i>
+                <span>Замовлення</span>
+            </button>
+            <button class="mobile-nav-item" onclick="window.navigateTo('newOrder')" data-route="newOrder">
+                <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center -mt-4 border-4 border-gray-900">
+                    <i class="fas fa-plus text-white"></i>
+                </div>
+            </button>
+            <button class="mobile-nav-item" onclick="window.navigateTo('kanban')" data-route="kanban">
+                <i class="fas fa-columns"></i>
+                <span>Kanban</span>
+            </button>
+            <button class="mobile-nav-item" onclick="window.navigateTo('finance')" data-route="finance">
+                <i class="fas fa-wallet"></i>
+                <span>Каса</span>
+            </button>
+        </nav>
     </div>
 
     <!-- Модальне вікно -->
-    <div id="modalOverlay" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-        <div id="modalContent" class="bg-gray-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-700 shadow-2xl"></div>
+    <div id="modalOverlay" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-end md:items-center justify-center">
+        <div id="modalContent" class="bg-gray-800 w-full md:w-full md:max-w-2xl md:rounded-2xl rounded-t-2xl max-h-[90vh] overflow-y-auto border border-gray-700 shadow-2xl transform transition-transform duration-300 translate-y-full md:translate-y-0"></div>
     </div>
 
-    <!-- Головний модуль (type="module" дозволяє використовувати ES6 imports) -->
+    <!-- Scripts -->
     <script type="module" src="js/app.js"></script>
 </body>
 </html>
