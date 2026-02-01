@@ -1,7 +1,6 @@
 import Database from './database.js';
 import ClientModule from './clients.js';
 import InventoryModule from './inventory.js';
-import { Modal, Toast } from './ui.js';
 
 const OrderModule = {
     currentOrder: null,
@@ -110,7 +109,7 @@ const OrderModule = {
         if (order) {
             order.status = newStatus;
             if (newStatus === 'ready') {
-                Toast.show(`SMS: Замовлення ${order.number} готове!`, 'info');
+                window.Toast.show(`SMS: Замовлення ${order.number} готове!`, 'info');
             }
             Database.save();
         }
@@ -369,19 +368,19 @@ const OrderModule = {
             </div>
         `;
         
-        Modal.open(content);
+        window.Modal.open(content);
     },
 
     showAddPartModal() {
         const parts = Database.query('inventory').filter(p => p.qty > 0);
         if (parts.length === 0) {
-            Toast.show('Немає запчастин на складі!', 'error');
+            window.Toast.show('Немає запчастин на складі!', 'error');
             return;
         }
         
         const options = parts.map(p => `<option value="${p.id}" data-price="${p.price}">${p.name} (в наявн.: ${p.qty})</option>`).join('');
         
-        Modal.open(`
+        window.Modal.open(`
             <div class="p-6">
                 <h3 class="text-xl font-bold mb-4">Додати запчастину</h3>
                 <div class="space-y-4">
@@ -396,7 +395,7 @@ const OrderModule = {
                 </div>
                 <div class="flex gap-3 mt-6">
                     <button onclick="window.confirmAddPartToOrder()" class="flex-1 bg-purple-600 hover:bg-purple-700 py-2 rounded-lg text-white">Додати</button>
-                    <button onclick="Modal.close()" class="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-700">Скасувати</button>
+                    <button onclick="window.Modal.close()" class="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-700 transition-colors">Скасувати</button>
                 </div>
             </div>
         `);
@@ -406,7 +405,7 @@ const OrderModule = {
         const services = Database.query('services');
         const options = services.map(s => `<option value="${s.id}" data-price="${s.price}">${s.name} (₴${s.price})</option>`).join('');
         
-        Modal.open(`
+        window.Modal.open(`
             <div class="p-6">
                 <h3 class="text-xl font-bold mb-4">Додати послугу</h3>
                 <div class="space-y-4">
@@ -418,7 +417,7 @@ const OrderModule = {
                 </div>
                 <div class="flex gap-3 mt-6">
                     <button onclick="window.confirmAddServiceToOrder()" class="flex-1 bg-cyan-600 hover:bg-cyan-700 py-2 rounded-lg text-white">Додати</button>
-                    <button onclick="window.Modal.close()" class="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-700">Скасувати</button>
+                    <button onclick="window.Modal.close()" class="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-700 transition-colors">Скасувати</button>
                 </div>
             </div>
         `);
@@ -517,7 +516,6 @@ const OrderModule = {
 // Глобальні функції для HTML onclick
 window.openOrderDetail = (id) => OrderModule.openDetail(id);
 window.navigateTo = (route) => {
-    // Імпортуємо Router динамічно щоб уникнути циклічних залежностей
     import('./router.js').then(module => {
         module.default.navigate(route);
     });
@@ -538,14 +536,14 @@ window.submitNewOrder = (e) => {
     data.prepayment = parseFloat(data.prepayment) || 0;
     
     OrderModule.create(data);
-    Toast.show('Замовлення створено!', 'success');
+    window.Toast.show('Замовлення створено!', 'success');
     window.navigateTo('orders');
 };
 
 window.updateOrderStatus = (id, status) => {
     OrderModule.changeStatus(id, status);
     OrderModule.openDetail(id);
-    Toast.show('Статус оновлено', 'success');
+    window.Toast.show('Статус оновлено', 'success');
 };
 
 window.showAddPartToOrder = () => OrderModule.showAddPartModal();
@@ -557,15 +555,15 @@ window.confirmAddPartToOrder = () => {
     const price = parseFloat(document.getElementById('addPartPrice').value);
     
     if (!partId || !qty || !price) {
-        Toast.show('Заповніть всі поля', 'error');
+        window.Toast.show('Заповніть всі поля', 'error');
         return;
     }
     
     if (OrderModule.addPart(OrderModule.currentOrder.id, partId, qty, price)) {
         OrderModule.openDetail(OrderModule.currentOrder.id);
-        Toast.show('Запчастину додано', 'success');
+        window.Toast.show('Запчастину додано', 'success');
     } else {
-        Toast.show('Недостатньо на складі', 'error');
+        window.Toast.show('Недостатньо на складі', 'error');
     }
 };
 
@@ -574,26 +572,25 @@ window.confirmAddServiceToOrder = () => {
     const price = parseFloat(document.getElementById('addServicePrice').value);
     
     if (!serviceId || !price) {
-        Toast.show('Виберіть послугу та вкажіть ціну', 'error');
+        window.Toast.show('Виберіть послугу та вкажіть ціну', 'error');
         return;
     }
     
     OrderModule.addService(OrderModule.currentOrder.id, serviceId, price);
     OrderModule.openDetail(OrderModule.currentOrder.id);
-    Toast.show('Послугу додано', 'success');
+    window.Toast.show('Послугу додано', 'success');
 };
 
 window.removeOrderPart = (orderId, idx) => {
     OrderModule.removePart(orderId, idx);
     OrderModule.openDetail(orderId);
-    Toast.show('Запчастину видалено', 'info');
-    window.refreshCurrentPage();
+    window.Toast.show('Запчастину видалено', 'info');
 };
 
 window.removeOrderService = (orderId, idx) => {
     OrderModule.removeService(orderId, idx);
     OrderModule.openDetail(orderId);
-    Toast.show('Послугу видалено', 'info');
+    window.Toast.show('Послугу видалено', 'info');
 };
 
 window.issueOrder = (id) => {
@@ -616,11 +613,10 @@ window.issueOrder = (id) => {
     Database.save();
     
     window.Modal.close();
-    Toast.show('Замовлення видано клієнту', 'success');
+    window.Toast.show('Замовлення видано клієнту', 'success');
     window.navigateTo('orders');
 };
 
 window.printOrder = (id) => OrderModule.printOrder(id);
-
 
 export default OrderModule;
