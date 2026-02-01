@@ -42,28 +42,26 @@ const InventoryModule = {
     },
 
     showAddModal() {
-        const content = `
-            <div class="p-6">
-                <h3 class="text-xl font-bold mb-4">Нова запчастина</h3>
-                <div class="space-y-4">
-                    <input type="text" id="partName" placeholder="Назва" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
-                    <input type="text" id="partSku" placeholder="Артикул" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
-                    <input type="text" id="partCategory" placeholder="Категорія" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
-                    <div class="grid grid-cols-3 gap-4">
-                        <input type="number" id="partQty" placeholder="К-ть" class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
-                        <input type="number" id="partCost" placeholder="Собів." class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
-                        <input type="number" id="partPrice" placeholder="Ціна" class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
-                    </div>
+    window.Modal.open(`
+        <div class="p-6">
+            <h3 class="text-xl font-bold mb-4">Нова запчастина</h3>
+            <form onsubmit="window.saveNewPart(event)" class="space-y-4">
+                <input type="text" id="partName" placeholder="Назва" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
+                <input type="text" id="partSku" placeholder="Артикул" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
+                <input type="text" id="partCategory" placeholder="Категорія" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
+                <div class="grid grid-cols-3 gap-4">
+                    <input type="number" id="partQty" placeholder="К-ть" required class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
+                    <input type="number" id="partCost" placeholder="Собів." required class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
+                    <input type="number" id="partPrice" placeholder="Ціна" required class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
                 </div>
                 <div class="flex gap-3 mt-6">
-                    <button onclick="window.saveNewPart()" class="flex-1 bg-blue-600 hover:bg-blue-700 py-2 rounded-lg text-white">Зберегти</button>
-                    <button onclick="Modal.close()" class="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-700">Скасувати</button>
+                    <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 py-2 rounded-lg text-white">Зберегти</button>
+                    <button type="button" onclick="window.Modal.close()" class="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-700">Скасувати</button>
                 </div>
-            </div>
-        `;
-        Modal.open(content);
-    },
-
+            </form>
+        </div>
+    `);
+}
     save() {
         const data = {
             name: document.getElementById('partName').value,
@@ -107,5 +105,6 @@ const InventoryModule = {
 // Глобальні функції
 window.openAddPartModal = () => InventoryModule.showAddModal();
 window.saveNewPart = () => InventoryModule.save();
+
 
 export default InventoryModule;
