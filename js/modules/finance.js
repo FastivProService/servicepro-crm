@@ -6,30 +6,25 @@ const FinanceModule = {
         const today = new Date().toDateString();
         const transactions = Database.query('transactions');
         
-        // Фільтр за сьогодні
         const todayTrans = transactions.filter(t => new Date(t.date).toDateString() === today);
         
-        // Доходи (оплата замовлень)
         const income = todayTrans
             .filter(t => t.type === 'income')
             .reduce((s, t) => s + t.amount, 0);
             
-        // Витрати (закупівлі, зарплата)
         const expenses = todayTrans
             .filter(t => t.type === 'expense')
             .reduce((s, t) => s + t.amount, 0);
         
-        // Внесення в касу
         const cashIn = todayTrans
             .filter(t => t.type === 'cash_in')
             .reduce((s, t) => s + t.amount, 0);
             
-        // Зняття з каси
         const cashOut = todayTrans
             .filter(t => t.type === 'cash_out')
             .reduce((s, t) => s + t.amount, 0);
 
-        // Баланс каси (всі внесення - всі зняття - витрати + доходи)
+        // Баланс каси
         const cashBalance = transactions
             .filter(t => ['cash_in', 'income'].includes(t.type))
             .reduce((s, t) => s + t.amount, 0) -
@@ -37,7 +32,6 @@ const FinanceModule = {
             .filter(t => ['cash_out', 'expense'].includes(t.type))
             .reduce((s, t) => s + t.amount, 0);
 
-        // Місячна виручка
         const monthRevenue = transactions
             .filter(t => {
                 const d = new Date(t.date);
@@ -84,7 +78,7 @@ const FinanceModule = {
                         <div class="text-4xl font-bold text-white">₴${stats.cashBalance}</div>
                     </div>
                     <div class="text-right text-sm text-gray-400">
-                        <div class>Внесення сьогодні: <span class="text-green-400">+₴${stats.cashIn}</span></div>
+                        <div>Внесення сьогодні: <span class="text-green-400">+₴${stats.cashIn}</span></div>
                         <div>Зняття сьогодні: <span class="text-orange-400">-₴${stats.cashOut}</span></div>
                     </div>
                 </div>
@@ -170,8 +164,6 @@ const FinanceModule = {
         }).join('');
     },
 
-    // МОДАЛЬНІ ВІКНА ОПЕРАЦІЙ
-
     showCashInModal() {
         Modal.open(`
             <div class="p-6">
@@ -212,4 +204,101 @@ const FinanceModule = {
                             class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
                     </div>
                     <div class="flex gap-3 mt-6">
-                        <button type="submit" class="flex-1 bg-orange-600 hover:bg-orange-700 py-2 rounded-lg text-white font-semibold">З
+                        <button type="submit" class="flex-1 bg-orange-600 hover:bg-orange-700 py-2 rounded-lg text-white font-semibold">Зняти з каси</button>
+                        <button type="button" onclick="Modal.close()" class="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-700">Скасувати</button>
+                    </div>
+                </form>
+            </div>
+        `);
+    },
+
+    showExpenseModal() {
+        const categories = ['Закупівля запчастин', 'Зарплата', 'Оренда', 'Комунальні послуги', 'Реклама', 'Інше'];
+        
+        Modal.open(`
+            <div class="p-6">
+                <h3 class="text-xl font-bold mb-4 text-red-400"><i class="fas fa-minus-circle mr-2"></i>Витрата (розхід)</h3>
+                <form onsubmit="window.saveCashOperation(event, 'expense')" class="space-y-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Сума (грн)</label>
+                        <input type="number" name="amount" required min="1" 
+                            class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-lg font-bold text-red-400" placeholder="0.00">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Категорія витрат</label>
+                        <select name="category" id="expenseCategory" onchange="if(this.value==='custom') document.getElementById('customCategory').style.display='block'" 
+                            class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 mb-2">
+                            ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
+                            <option value="custom">Інше (ввести вручну)</option>
+                        </select>
+                        <input type="text" id="customCategory" style="display:none" placeholder="Вкажіть категорію..." 
+                            class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Опис (необов'язково)</label>
+                        <textarea name="description" rows="2" placeholder="Деталі витрати..." 
+                            class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2"></textarea>
+                    </div>
+                    <div class="flex gap-3 mt-6">
+                        <button type="submit" class="flex-1 bg-red-600 hover:bg-red-700 py-2 rounded-lg text-white font-semibold">Зафіксувати витрату</button>
+                        <button type="button" onclick="Modal.close()" class="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-700">Скасувати</button>
+                    </div>
+                </form>
+            </div>
+        `);
+    },
+
+    saveOperation(e, type) {
+        e.preventDefault();
+        const form = e.target;
+        const amount = parseFloat(form.amount.value);
+        
+        if (!amount || amount <= 0) {
+            Toast.show('Вкажіть коректну суму', 'error');
+            return;
+        }
+
+        let category = form.category.value;
+        if (category === 'custom') {
+            category = document.getElementById('customCategory').value || 'Інше';
+        }
+
+        Database.create('transactions', {
+            type: type,
+            amount: amount,
+            category: category,
+            description: form.description?.value || '',
+            date: new Date().toISOString(),
+            user: 'admin'
+        });
+
+        Modal.close();
+        
+        const messages = {
+            'cash_in': 'Готівку внесено в касу',
+            'cash_out': 'Готівку знято з каси',
+            'expense': 'Витрату зафіксовано'
+        };
+        
+        Toast.show(messages[type], 'success');
+        
+        // Оновлюємо поточну сторінку
+        if (window.currentRoute === 'finance') {
+            import('./router.js').then(m => m.default.navigate('finance'));
+        }
+    },
+
+    filterTransactions(type) {
+        const transactions = Database.query('transactions').slice(-30).reverse();
+        document.getElementById('transactionsList').innerHTML = this.renderTransactionsList(transactions, type);
+    }
+};
+
+// Глобальні функції
+window.showCashInModal = () => FinanceModule.showCashInModal();
+window.showCashOutModal = () => FinanceModule.showCashOutModal();
+window.showExpenseModal = () => FinanceModule.showExpenseModal();
+window.saveCashOperation = (e, type) => FinanceModule.saveOperation(e, type);
+window.filterTransactions = (type) => FinanceModule.filterTransactions(type);
+
+export default FinanceModule;
