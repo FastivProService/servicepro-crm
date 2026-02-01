@@ -418,7 +418,7 @@ const OrderModule = {
                 </div>
                 <div class="flex gap-3 mt-6">
                     <button onclick="window.confirmAddServiceToOrder()" class="flex-1 bg-cyan-600 hover:bg-cyan-700 py-2 rounded-lg text-white">Додати</button>
-                    <button onclick="Modal.close()" class="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-700">Скасувати</button>
+                    <button onclick="window.Modal.close()" class="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-700">Скасувати</button>
                 </div>
             </div>
         `);
@@ -615,11 +615,12 @@ window.issueOrder = (id) => {
     order.issuedAt = new Date().toISOString();
     Database.save();
     
-    Modal.close();
+    window.Modal.close();
     Toast.show('Замовлення видано клієнту', 'success');
     window.navigateTo('orders');
 };
 
 window.printOrder = (id) => OrderModule.printOrder(id);
+
 
 export default OrderModule;
