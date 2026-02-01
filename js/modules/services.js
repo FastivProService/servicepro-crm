@@ -1,5 +1,4 @@
 import Database from './database.js';
-import { Modal, Toast } from './ui.js';
 
 const ServiceModule = {
     render() {
@@ -46,62 +45,51 @@ const ServiceModule = {
     },
 
     showAddModal() {
-    window.Modal.open(`
-        <div class="p-6">
-            <h3 class="text-xl font-bold mb-4">Нова послуга</h3>
-            <form onsubmit="window.saveNewService(event)" class="space-y-4">
-                <input type="text" id="svcName" placeholder="Назва послуги" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
-                <input type="text" id="svcCategory" placeholder="Категорія" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
-                <input type="text" id="svcDuration" placeholder="Тривалість" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
-                <input type="number" id="svcPrice" placeholder="Вартість" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
-                <div class="flex gap-3 mt-6">
-                    <button type="submit" class="flex-1 bg-cyan-600 hover:bg-cyan-700 py-2 rounded-lg text-white">Зберегти</button>
-                    <button type="button" onclick="window.Modal.close()" class="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-700">Скасувати</button>
-                </div>
-            </form>
-        </div>
-    `);
-},
+        window.Modal.open(`
+            <div class="p-6">
+                <h3 class="text-xl font-bold mb-4">Нова послуга</h3>
+                <form onsubmit="window.saveNewService(event)" class="space-y-4">
+                    <input type="text" id="svcName" placeholder="Назва послуги" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-cyan-500 focus:outline-none">
+                    <input type="text" id="svcCategory" placeholder="Категорія" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-cyan-500 focus:outline-none">
+                    <input type="text" id="svcDuration" placeholder="Тривалість (напр. 1-2 год)" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-cyan-500 focus:outline-none">
+                    <input type="number" id="svcPrice" placeholder="Вартість" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-cyan-500 focus:outline-none">
+                    <div class="flex gap-3 mt-6">
+                        <button type="submit" class="flex-1 bg-cyan-600 hover:bg-cyan-700 py-2 rounded-lg text-white font-semibold">Зберегти</button>
+                        <button type="button" onclick="window.Modal.close()" class="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-700 transition-colors">Скасувати</button>
+                    </div>
+                </form>
+            </div>
+        `);
+    },
 
-edit(id) {
-    const service = Database.find('services', id);
-    window.Modal.open(`
-        <div class="p-6">
-            <h3 class="text-xl font-bold mb-4">Редагувати послугу</h3>
-            <form onsubmit="window.saveEditedService(event, ${id})" class="space-y-4">
-                <input type="text" id="editSvcName" value="${service.name}" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
-                <input type="text" id="editSvcCategory" value="${service.category}" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
-                <input type="text" id="editSvcDuration" value="${service.duration}" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
-                <input type="number" id="editSvcPrice" value="${service.price}" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
-                <div class="flex gap-3 mt-6">
-                    <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 py-2 rounded-lg text-white">Зберегти зміни</button>
-                    <button type="button" onclick="window.Modal.close()" class="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-700">Скасувати</button>
-                </div>
-            </form>
-        </div>
-    `);
-}
+    save(e) {
+        e.preventDefault();
+        Database.create('services', {
+            name: document.getElementById('svcName').value,
+            category: document.getElementById('svcCategory').value,
+            duration: document.getElementById('svcDuration').value,
+            price: parseFloat(document.getElementById('svcPrice').value) || 0
+        });
+        window.Modal.close();
+        window.Toast.show('Послугу додано', 'success');
+        import('./router.js').then(m => m.default.navigate('services'));
+    },
 
-    // РЕДАГУВАННЯ
     edit(id) {
         const service = Database.find('services', id);
         if (!service) return;
 
-        Modal.open(`
+        window.Modal.open(`
             <div class="p-6">
                 <h3 class="text-xl font-bold mb-4">Редагувати послугу</h3>
                 <form onsubmit="window.saveEditedService(event, ${id})" class="space-y-4">
-                    <input type="text" id="editSvcName" value="${service.name}" required 
-                        class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
-                    <input type="text" id="editSvcCategory" value="${service.category}" required 
-                        class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
-                    <input type="text" id="editSvcDuration" value="${service.duration}" required 
-                        class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
-                    <input type="number" id="editSvcPrice" value="${service.price}" required 
-                        class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
+                    <input type="text" id="editSvcName" value="${service.name}" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
+                    <input type="text" id="editSvcCategory" value="${service.category}" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
+                    <input type="text" id="editSvcDuration" value="${service.duration}" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
+                    <input type="number" id="editSvcPrice" value="${service.price}" required class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
                     <div class="flex gap-3 mt-6">
-                        <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 py-2 rounded-lg text-white">Зберегти зміни</button>
-                        <button type="button" onclick="Modal.close()" class="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-700">Скасувати</button>
+                        <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 py-2 rounded-lg text-white font-semibold">Зберегти зміни</button>
+                        <button type="button" onclick="window.Modal.close()" class="px-4 py-2 border border-gray-600 rounded-lg hover:bg-gray-700 transition-colors">Скасувати</button>
                     </div>
                 </form>
             </div>
@@ -110,28 +98,25 @@ edit(id) {
 
     saveEdit(e, id) {
         e.preventDefault();
-        const updates = {
+        Database.update('services', id, {
             name: document.getElementById('editSvcName').value,
             category: document.getElementById('editSvcCategory').value,
             duration: document.getElementById('editSvcDuration').value,
             price: parseFloat(document.getElementById('editSvcPrice').value) || 0
-        };
-        
-        Database.update('services', id, updates);
-        Modal.close();
-        Toast.show('Послугу оновлено', 'success');
-        window.refreshCurrentPage();
+        });
+        window.Modal.close();
+        window.Toast.show('Послугу оновлено', 'success');
+        import('./router.js').then(m => m.default.navigate('services'));
     },
 
     remove(id) {
         if (!confirm('Видалити цю послугу?')) return;
         Database.delete('services', id);
-        Toast.show('Послугу видалено', 'info');
-        window.refreshCurrentPage();
+        window.Toast.show('Послугу видалено', 'info');
+        import('./router.js').then(m => m.default.navigate('services'));
     }
 };
 
-// Глобальні функції
 window.openAddServiceModal = () => ServiceModule.showAddModal();
 window.saveNewService = (e) => ServiceModule.save(e);
 window.editService = (id) => ServiceModule.edit(id);
@@ -139,4 +124,3 @@ window.saveEditedService = (e, id) => ServiceModule.saveEdit(e, id);
 window.deleteService = (id) => ServiceModule.remove(id);
 
 export default ServiceModule;
-
