@@ -69,7 +69,7 @@ const ClientModule = {
         const client = Database.find('clients', clientId);
         const orders = Database.findBy('orders', 'clientId', clientId);
         
-        Modal.open(`
+        window.Modal.open(`
             <div class="p-6">
                 <h3 class="text-xl font-bold mb-4">${client.name}</h3>
                 <p class="text-gray-400 mb-4">Телефон: ${client.phone}</p>
@@ -101,5 +101,6 @@ window.filterClients = () => {
 };
 
 window.showClientHistory = (id) => ClientModule.showHistory(id);
+
 
 export default ClientModule;
