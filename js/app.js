@@ -24,13 +24,7 @@ const App = {
         // Перехід на дашборд
         Router.navigate('dashboard');
 
-        // Додай цю функцію після ініціалізації App
-window.refreshCurrentPage = function() {
-    if (window.currentRoute) {
-        Router.navigate(window.currentRoute);
-    }
-};
-        
+  
         // Закриття модалок по кліку поза ними
         document.getElementById('modalOverlay').addEventListener('click', (e) => {
             if (e.target.id === 'modalOverlay') {
@@ -43,3 +37,4 @@ window.refreshCurrentPage = function() {
 // Робимо App доступним глобально для HTML
 
 window.App = App;
+
