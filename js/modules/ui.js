@@ -1,5 +1,4 @@
-// Модуль UI компонентів (модальні вікна, сповіщення)
-export const Modal = {
+const Modal = {
     open(content) {
         const modal = document.getElementById('modalOverlay');
         const modalContent = document.getElementById('modalContent');
@@ -7,9 +6,13 @@ export const Modal = {
         modal.classList.remove('hidden');
         
         // Закриття по Escape
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') this.close();
-        });
+        const closeOnEscape = (e) => {
+            if (e.key === 'Escape') {
+                Modal.close();
+                document.removeEventListener('keydown', closeOnEscape);
+            }
+        };
+        document.addEventListener('keydown', closeOnEscape);
     },
     
     close() {
@@ -17,9 +20,8 @@ export const Modal = {
     }
 };
 
-export const Toast = {
+const Toast = {
     show(message, type = 'info') {
-        const toast = document.createElement('div');
         const colors = {
             info: 'bg-blue-600',
             success: 'bg-green-600',
@@ -27,17 +29,24 @@ export const Toast = {
             warning: 'bg-yellow-600'
         };
         
-        toast.className = `fixed bottom-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 fade-in flex items-center gap-2`;
-        toast.innerHTML = `
-            <i class="fas ${type === 'success' ? 'fa-check' : 'fa-info-circle'}"></i>
+        const div = document.createElement('div');
+        div.className = `fixed bottom-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 fade-in flex items-center gap-2`;
+        div.innerHTML = `
+            <i class="fas ${type === 'success' ? 'fa-check' : type === 'error' ? 'fa-times' : 'fa-info-circle'}"></i>
             <span>${message}</span>
         `;
         
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
+        document.body.appendChild(div);
+        setTimeout(() => {
+            div.style.opacity = '0';
+            div.style.transform = 'translateY(20px)';
+            setTimeout(() => div.remove(), 300);
+        }, 3000);
     }
-
 };
-// Робимо Modal глобальним
-window.Modal = { open: Modal.open, close: Modal.close };
+
+// РОБИМО ГЛОБАЛЬНИМИ для доступу з onclick
+window.Modal = Modal;
+window.Toast = Toast;
+
 export { Modal, Toast };
