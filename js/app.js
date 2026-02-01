@@ -1,6 +1,9 @@
 import Database from './modules/database.js';
 import Auth from './modules/auth.js';
 import Router from './modules/router.js';
+// Робимо Modal глобальним зразу після імпорту
+import { Modal } from './modules/ui.js';
+window.Modal = Modal;
 
 // Робимо Database доступним глобально для кнопки експорту в HTML
 window.Database = Database;
@@ -37,4 +40,5 @@ const App = {
 // Робимо App доступним глобально для HTML
 
 window.App = App;
+
 
