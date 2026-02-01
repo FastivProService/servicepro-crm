@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="uk" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ServicePro CRM - Модульна система</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-gray-900 text-gray-100 antialiased">
+    
+    <!-- Модуль Авторизації -->
+    <div id="authModule" class="fixed inset-0 z-50 flex items-center justify-center bg-gray-950">
+        <div class="glass p-8 rounded-2xl w-full max-w-md fade-in">
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-tools text-3xl text-blue-500"></i>
+                </div>
+                <h1 class="text-2xl font-bold">ServicePro CRM</h1>
+                <p class="text-gray-400 mt-2">Модульна система управління</p>
+            </div>
+            <div class="space-y-4">
+                <select id="authRole" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 focus:border-blue-500 focus:outline-none">
+                    <option value="admin">Адміністратор</option>
+                    <option value="manager">Менеджер</option>
+                    <option value="technician">Майстер</option>
+                </select>
+                <button onclick="App.init()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-all">
+                    Увійти в систему
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Головний інтерфейс -->
+    <div id="mainInterface" class="hidden h-screen flex">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-gray-800 border-r border-gray-700 flex flex-col no-print">
+            <div class="p-6 border-b border-gray-700">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-wrench text-white"></i>
+                    </div>
+                    <div>
+                        <div class="font-bold text-lg">ServicePro</div>
+                        <div class="text-xs text-gray-400" id="userRoleDisplay">Admin</div>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="flex-1 p-4 space-y-1" id="navigation">
+                <!-- Навігація генерується динамічно -->
+            </nav>
+            
+            <div class="p-4 border-t border-gray-700">
+                <button onclick="Database.export()" class="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-download"></i><span>Експорт БД</span>
+                </button>
+                <button onclick="location.reload()" class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:text-red-300 transition-colors mt-2">
+                    <i class="fas fa-sign-out-alt"></i><span>Вийти</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Контент -->
+        <main class="flex-1 overflow-y-auto bg-gray-900 p-8" id="contentArea">
+            <!-- Динамічний контент -->
+        </main>
+    </div>
+
+    <!-- Модальне вікно -->
+    <div id="modalOverlay" class="fixed inset-0 z-50 hidden bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div id="modalContent" class="bg-gray-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-700 shadow-2xl"></div>
+    </div>
+
+    <!-- Головний модуль (type="module" дозволяє використовувати ES6 imports) -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
