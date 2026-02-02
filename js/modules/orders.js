@@ -2,6 +2,200 @@ import Database from './database.js';
 import ClientModule from './clients.js';
 import InventoryModule from './inventory.js';
 
+renderList() {
+    const orders = Database.query('orders').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    // Mobile card view / Desktop table
+    const isMobile = window.innerWidth < 768;
+    
+    if (isMobile) {
+        return `
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Замовлення</h2>
+                <span class="text-gray-400 text-sm">${orders.length} шт.</span>
+            </div>
+            <div class="space-y-3 pb-20">
+                ${orders.map(o => this.renderMobileCard(o)).join('')}
+            </div>
+        `;
+    }
+    
+    // Desktop table view (previous code)
+    return `
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-3xl font-bold">Замовлення</h2>
+            <button onclick="window.navigateTo('newOrder')" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg flex items-center gap-2">
+                <i class="fas fa-plus"></i> Нове
+            </button>
+        </div>
+        <div class="glass rounded-xl overflow-hidden">
+            <table class="w-full">
+                <thead class="bg-gray-800 border-b border-gray-700">
+                    <tr>
+                        <th class="px-6 py-4 text-left">№</th>
+                        <th class="px-6 py-4 text-left">Клієнт</th>
+                        <th class="px-6 py-4 text-left">Статус</th>
+                        <th class="px-6 py-4 text-right">Сума</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-800">
+                    ${orders.map(o => this.renderRow(o)).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+},
+
+renderMobileCard(order) {
+    const client = Database.find('clients', order.clientId);
+    const total = this.calculateTotal(order);
+    const statusColors = {
+        'new': 'bg-gray-700',
+        'diagnostic': 'bg-yellow-500/20 text-yellow-400',
+        'in_repair': 'bg-blue-500/20 text-blue-400',
+        'ready': 'bg-green-500/20 text-green-400',
+        'issued': 'bg-gray-600 text-gray-400'
+    };
+    const statusNames = {
+        'new': 'Новий',
+        'diagnostic': 'Діагностика',
+        'in_repair': 'В ремонті',
+        'ready': 'Готовий',
+        'issued': 'Видано'
+    };
+    
+    return `
+        <div class="mobile-card swipe-action" onclick="window.openOrderDetail(${order.id})">
+            <div class="flex justify-between items-start mb-2">
+                <div>
+                    <div class="font-mono text-blue-400 font-bold text-sm">${order.number}</div>
+                    <div class="font-semibold text-lg">${client?.name || 'Невідомо'}</div>
+                </div>
+                <span class="px-2 py-1 rounded-full text-xs ${statusColors[order.status] || 'bg-gray-700'}">
+                    ${statusNames[order.status]}
+                </span>
+            </div>
+            <div class="text-gray-400 text-sm mb-3">
+                ${order.deviceBrand} ${order.deviceModel}
+            </div>
+            <div class="flex justify-between items-center border-t border-gray-700 pt-3">
+                <span class="text-gray-500 text-sm">${new Date(order.createdAt).toLocaleDateString()}</span>
+                <span class="font-bold text-lg">₴${total}</span>
+            </div>
+        </div>
+    `;
+},
+
+// Mobile optimized detail view
+openDetail(id) {
+    const order = Database.find('orders', id);
+    const client = Database.find('clients', order.clientId);
+    this.currentOrder = order;
+    const total = this.calculateTotal(order);
+    const toPay = total - (order.prepayment || 0);
+    const isMobile = window.innerWidth < 768;
+
+    if (isMobile) {
+        // Mobile optimized detail
+        const content = `
+            <div class="p-4 pb-20">
+                <div class="flex justify-between items-center mb-4 sticky top-0 bg-gray-800 pt-2 pb-4 border-b border-gray-700 z-10">
+                    <h2 class="text-lg font-bold">${order.number}</h2>
+                    <button onclick="window.Modal.close()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <!-- Status selector -->
+                <div class="mb-4">
+                    <label class="text-xs text-gray-500 uppercase font-bold">Статус</label>
+                    <select onchange="window.updateOrderStatus(${order.id}, this.value)" 
+                        class="w-full mt-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-3 text-base">
+                        <option value="new" ${order.status === 'new' ? 'selected' : ''}>🆕 Новий</option>
+                        <option value="diagnostic" ${order.status === 'diagnostic' ? 'selected' : ''}>🔍 Діагностика</option>
+                        <option value="in_repair" ${order.status === 'in_repair' ? 'selected' : ''}>🔧 В ремонті</option>
+                        <option value="ready" ${order.status === 'ready' ? 'selected' : ''}>✅ Готовий</option>
+                        <option value="issued" ${order.status === 'issued' ? 'selected' : ''}>📦 Видано</option>
+                    </select>
+                </div>
+
+                <!-- Info cards -->
+                <div class="space-y-3 mb-4">
+                    <div class="bg-gray-900 rounded-lg p-3 border border-gray-700">
+                        <div class="text-xs text-gray-500 mb-1">Клієнт</div>
+                        <div class="font-semibold">${client.name}</div>
+                        <a href="tel:${client.phone}" class="text-blue-400 text-sm flex items-center gap-1 mt-1">
+                            <i class="fas fa-phone"></i> ${client.phone}
+                        </a>
+                    </div>
+                    
+                    <div class="bg-gray-900 rounded-lg p-3 border border-gray-700">
+                        <div class="text-xs text-gray-500 mb-1">Пристрій</div>
+                        <div class="font-semibold">${order.deviceBrand} ${order.deviceModel}</div>
+                        <div class="text-gray-400 text-sm">S/N: ${order.deviceSerial || '—'}</div>
+                    </div>
+
+                    <div class="bg-gray-900 rounded-lg p-3 border border-gray-700">
+                        <div class="text-xs text-gray-500 mb-1">Проблема</div>
+                        <div class="text-sm">${order.issue}</div>
+                    </div>
+                </div>
+
+                <!-- Parts & Services -->
+                <div class="mb-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-semibold text-purple-400">Запчастини</h3>
+                        <button onclick="window.showAddPartToOrder()" class="text-sm bg-purple-500/20 text-purple-400 px-3 py-1 rounded">
+                            + Додати
+                        </button>
+                    </div>
+                    ${order.parts?.length ? order.parts.map((p, i) => `
+                        <div class="flex justify-between items-center bg-gray-900 p-3 rounded-lg border border-gray-700 mb-2">
+                            <div>
+                                <div class="font-medium">${p.name}</div>
+                                <div class="text-sm text-gray-400">${p.qty} шт. × ₴${p.price}</div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold">₴${p.qty * p.price}</span>
+                                <button onclick="window.removeOrderPart(${order.id}, ${i})" class="text-red-400 p-2">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `).join('') : '<div class="text-gray-500 text-center py-4">Немає запчастин</div>'}
+                </div>
+
+                <!-- Total -->
+                <div class="bg-gradient-to-r from-blue-600/20 to-purple-600/20 border border-blue-500/30 rounded-lg p-4 mb-4">
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <div class="text-sm text-gray-400">Всього:</div>
+                            <div class="text-2xl font-bold">₴${total}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm text-gray-400">Аванс: ₴${order.prepayment || 0}</div>
+                            <div class="text-lg font-semibold text-yellow-400">До сплати: ₴${toPay}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="window.printOrder(${order.id})" class="bg-blue-600 py-3 rounded-lg font-semibold flex items-center justify-center gap-2">
+                        <i class="fas fa-print"></i> Друк
+                    </button>
+                    ${order.status !== 'issued' ? `
+                        <button onclick="window.issueOrder(${order.id})" class="bg-green-600 py-3 rounded-lg font-semibold flex items-center justify-center gap-2">
+                            <i class="fas fa-check"></i> Видано
+                        </button>
+                    ` : '<div></div>'}
+                </div>
+            </div>
+        `;
+        window.Modal.open(content);
+    } else {
+        // Desktop version (previous code)
+
 const OrderModule = {
     currentOrder: null,
 
@@ -620,3 +814,4 @@ window.issueOrder = (id) => {
 window.printOrder = (id) => OrderModule.printOrder(id);
 
 export default OrderModule;
+
