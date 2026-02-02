@@ -111,3 +111,4 @@ if ('ontouchstart' in window) {
 window.Modal = Modal;
 window.Toast = Toast;
 export { Modal, Toast };
+
