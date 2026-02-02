@@ -3,6 +3,18 @@ import OrderModule from './orders.js';
 import FinanceModule from './finance.js';
 
 const DashboardModule = {
+   render() {
+    const orders = Database.query('orders');
+    const active = orders.filter(o => !['issued', 'cancelled'].includes(o.status)).length;
+    const ready = orders.filter(o => o.status === 'ready').length;
+    const stats = FinanceModule.getStats();
+    const isMobile = window.innerWidth < 768;
+
+    return `
+        <div class="mb-4 md:mb-8">
+            <h2 class="text-xl md:text-3xl font-bold">Дашборд</h2>
+            <p class="text-gray-400 mt-1 text-sm md:text-base">Огляд роботи сервісу</p>
+    
     render() {
         const orders = Database.query('orders');
         const active = orders.filter(o => !['issued', 'cancelled'].includes(o.status)).length;
@@ -109,5 +121,6 @@ const DashboardModule = {
         });
     }
 };
+
 
 export default DashboardModule;
