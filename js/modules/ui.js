@@ -6,7 +6,7 @@ const Modal = {
         modalContent.innerHTML = content;
         modal.classList.remove('hidden');
         
-        // Mobile slide-up animation
+        // Анімація для мобільного
         if (window.innerWidth < 768) {
             setTimeout(() => {
                 modalContent.style.transform = 'translateY(0)';
@@ -19,7 +19,7 @@ const Modal = {
             if (e.target === modal) this.close();
         };
         
-        // Handle back button on mobile
+        // Кнопка "Назад" на телефоні закриває модалку
         window.history.pushState({modal: true}, '');
         window.onpopstate = () => {
             if (window.history.state?.modal) {
@@ -87,35 +87,30 @@ const Sidebar = {
         const sidebar = document.getElementById('mainSidebar');
         const overlay = document.getElementById('sidebarOverlay');
         
-        sidebar.classList.remove('-translate-x-full');
-        
-        overlay.classList.remove('hidden');
-        // Невелика затримка для CSS transition opacity
-        setTimeout(() => {
-            overlay.classList.remove('opacity-0');
-        }, 10);
-        
-        document.body.style.overflow = 'hidden'; // Блокуємо скрол фону
-        this.isOpen = true;
+        if(sidebar && overlay) {
+            sidebar.classList.remove('-translate-x-full');
+            overlay.classList.remove('hidden');
+            setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            document.body.style.overflow = 'hidden';
+            this.isOpen = true;
+        }
     },
 
     close() {
         const sidebar = document.getElementById('mainSidebar');
         const overlay = document.getElementById('sidebarOverlay');
         
-        sidebar.classList.add('-translate-x-full');
-        
-        overlay.classList.add('opacity-0');
-        setTimeout(() => {
-            overlay.classList.add('hidden');
-        }, 300);
-        
-        document.body.style.overflow = '';
-        this.isOpen = false;
+        if(sidebar && overlay) {
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.add('opacity-0');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+            document.body.style.overflow = '';
+            this.isOpen = false;
+        }
     }
 };
 
-// Pull to refresh for mobile
+// Pull to refresh (оновлення потягуванням вниз)
 let pullStartY = 0;
 let pullMoveY = 0;
 
@@ -149,14 +144,8 @@ if ('ontouchstart' in window) {
     });
 }
 
-// Експортуємо в глобальну область
 window.Modal = Modal;
 window.Toast = Toast;
 window.Sidebar = Sidebar;
-
-// Закриваємо сайдбар при навігації (якщо ми на мобільному)
-const originalNavigate = window.routerNavigate; // Зберігаємо стару функцію, якщо вона вже є, або патчимо router
-// Краще зробимо це через event listener або в Router, 
-// але найпростіше - додати перехоплення кліків на посилання в Sidebar
 
 export { Modal, Toast, Sidebar };
