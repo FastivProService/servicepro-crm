@@ -16,7 +16,7 @@ const Router = {
         const content = document.getElementById('contentArea');
 
         Modal.close();
-
+        if (window.Sidebar) window.Sidebar.close();
         switch (route) {
             case 'dashboard':
                 content.innerHTML = DashboardModule.render();
@@ -152,3 +152,4 @@ const Router = {
 window.routerNavigate = (route) => Router.navigate(route);
 
 export default Router;
+
