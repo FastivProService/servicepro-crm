@@ -13,10 +13,8 @@ const Modal = {
             }, 10);
         }
         
-        // Lock body scroll
         document.body.style.overflow = 'hidden';
         
-        // Add close on backdrop click for mobile
         modal.onclick = (e) => {
             if (e.target === modal) this.close();
         };
@@ -58,7 +56,7 @@ const Toast = {
         };
         
         const div = document.createElement('div');
-        div.className = `fixed top-4 left-4 right-4 md:top-auto md:bottom-4 md:right-4 md:left-auto ${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2 text-sm md:text-base`;
+        div.className = `fixed top-4 left-4 right-4 md:top-auto md:bottom-4 md:right-4 md:left-auto ${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2 text-sm md:text-base fade-in`;
         div.innerHTML = `
             <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
             <span>${message}</span>
@@ -66,12 +64,54 @@ const Toast = {
         
         document.body.appendChild(div);
         
-        // Auto dismiss
         setTimeout(() => {
             div.style.opacity = '0';
             div.style.transform = 'translateY(-20px)';
             setTimeout(() => div.remove(), 300);
         }, 3000);
+    }
+};
+
+const Sidebar = {
+    isOpen: false,
+
+    toggle() {
+        if (this.isOpen) {
+            this.close();
+        } else {
+            this.open();
+        }
+    },
+
+    open() {
+        const sidebar = document.getElementById('mainSidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        
+        sidebar.classList.remove('-translate-x-full');
+        
+        overlay.classList.remove('hidden');
+        // Невелика затримка для CSS transition opacity
+        setTimeout(() => {
+            overlay.classList.remove('opacity-0');
+        }, 10);
+        
+        document.body.style.overflow = 'hidden'; // Блокуємо скрол фону
+        this.isOpen = true;
+    },
+
+    close() {
+        const sidebar = document.getElementById('mainSidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        
+        sidebar.classList.add('-translate-x-full');
+        
+        overlay.classList.add('opacity-0');
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+        }, 300);
+        
+        document.body.style.overflow = '';
+        this.isOpen = false;
     }
 };
 
@@ -91,24 +131,32 @@ if ('ontouchstart' in window) {
             pullMoveY = e.touches[0].clientY;
             const diff = pullMoveY - pullStartY;
             if (diff > 0 && diff < 100) {
-                document.getElementById('ptrIndicator').style.transform = `translateY(${diff - 64}px)`;
+                const indicator = document.getElementById('ptrIndicator');
+                if(indicator) indicator.style.transform = `translateY(${diff - 64}px)`;
             }
         }
     });
     
     document.addEventListener('touchend', () => {
         const diff = pullMoveY - pullStartY;
-        if (diff > 80) {
-            // Trigger refresh
+        if (diff > 80 && window.scrollY === 0) {
             location.reload();
         }
-        document.getElementById('ptrIndicator').style.transform = '';
+        const indicator = document.getElementById('ptrIndicator');
+        if(indicator) indicator.style.transform = '';
         pullStartY = 0;
         pullMoveY = 0;
     });
 }
 
+// Експортуємо в глобальну область
 window.Modal = Modal;
 window.Toast = Toast;
-export { Modal, Toast };
+window.Sidebar = Sidebar;
 
+// Закриваємо сайдбар при навігації (якщо ми на мобільному)
+const originalNavigate = window.routerNavigate; // Зберігаємо стару функцію, якщо вона вже є, або патчимо router
+// Краще зробимо це через event listener або в Router, 
+// але найпростіше - додати перехоплення кліків на посилання в Sidebar
+
+export { Modal, Toast, Sidebar };
