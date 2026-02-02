@@ -9,15 +9,15 @@ import { Modal } from './ui.js';
 
 const Router = {
     currentRoute: '',
-    
+
     navigate(route) {
         this.currentRoute = route;
         window.currentRoute = route; // Для глобального доступу
         const content = document.getElementById('contentArea');
-        
+
         Modal.close();
-        
-        switch(route) {
+
+        switch (route) {
             case 'dashboard':
                 content.innerHTML = DashboardModule.render();
                 setTimeout(() => DashboardModule.initCharts(), 100);
@@ -60,7 +60,7 @@ const Router = {
             in_repair: orders.filter(o => o.status === 'in_repair'),
             ready: orders.filter(o => o.status === 'ready')
         };
-        
+
         const colHtml = (title, items, color, bgColor) => `
             <div class="flex-1 min-w-[280px] bg-gray-800/30 rounded-xl p-4 border border-gray-700">
                 <div class="flex justify-between items-center mb-4">
@@ -69,9 +69,9 @@ const Router = {
                 </div>
                 <div class="space-y-3">
                     ${items.map(o => {
-                        const c = Database.find('clients', o.clientId);
-                        const total = OrderModule.calculateTotal(o);
-                        return `
+            const c = Database.find('clients', o.clientId);
+            const total = OrderModule.calculateTotal(o);
+            return `
                             <div class="bg-gray-800 p-3 rounded-lg border-l-4 ${bgColor} cursor-pointer hover:bg-gray-750 transition-all" onclick="window.openOrderDetail(${o.id})">
                                 <div class="flex justify-between items-start mb-1">
                                     <span class="text-xs font-mono text-blue-400 font-bold">${o.number}</span>
@@ -85,11 +85,11 @@ const Router = {
                                 </div>
                             </div>
                         `;
-                    }).join('') || '<p class="text-gray-600 text-sm text-center py-4">Немає замовлень</p>'}
+        }).join('') || '<p class="text-gray-600 text-sm text-center py-4">Немає замовлень</p>'}
                 </div>
             </div>
         `;
-        
+
         document.getElementById('contentArea').innerHTML = `
             <h2 class="text-3xl font-bold mb-6">Kanban дошка</h2>
             <div class="flex gap-4 overflow-x-auto pb-4 items-start">
@@ -102,9 +102,10 @@ const Router = {
     },
 
     initNavigation() {
-        const nav = document.getElementById('navigation');
+        // index.html uses id="desktopNav" for sidebar; use that id
+        const nav = document.getElementById('desktopNav');
         const menuItems = Auth.getMenu();
-        
+
         const icons = {
             dashboard: 'fa-chart-line',
             orders: 'fa-clipboard-list',
@@ -114,7 +115,7 @@ const Router = {
             clients: 'fa-users',
             finance: 'fa-wallet'
         };
-        
+
         const colors = {
             orders: 'text-blue-400',
             kanban: 'text-yellow-400',
@@ -123,7 +124,7 @@ const Router = {
             clients: 'text-green-400',
             finance: 'text-emerald-400'
         };
-        
+
         nav.innerHTML = menuItems.map(item => `
             <button onclick="window.routerNavigate('${item}')" 
                 class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-gray-300 hover:text-white mb-1">
