@@ -6,7 +6,6 @@ const Modal = {
         modalContent.innerHTML = content;
         modal.classList.remove('hidden');
         
-        // Анімація для мобільного
         if (window.innerWidth < 768) {
             setTimeout(() => {
                 modalContent.style.transform = 'translateY(0)';
@@ -19,7 +18,6 @@ const Modal = {
             if (e.target === modal) this.close();
         };
         
-        // Кнопка "Назад" на телефоні закриває модалку
         window.history.pushState({modal: true}, '');
         window.onpopstate = () => {
             if (window.history.state?.modal) {
@@ -73,44 +71,58 @@ const Toast = {
 };
 
 const Sidebar = {
-    isOpen: false,
+    isOpen: window.innerWidth >= 768, // На ПК відкрито за замовчуванням
 
     toggle() {
-        if (this.isOpen) {
-            this.close();
-        } else {
-            this.open();
-        }
-    },
-
-    open() {
         const sidebar = document.getElementById('mainSidebar');
         const overlay = document.getElementById('sidebarOverlay');
+        const mainContainer = document.getElementById('mainContainer');
+        const isMobile = window.innerWidth < 768;
+
+        // Перемикаємо клас видимості сайдбару
+        // -translate-x-full ховає його вліво
+        sidebar.classList.toggle('-translate-x-full');
         
-        if(sidebar && overlay) {
-            sidebar.classList.remove('-translate-x-full');
-            overlay.classList.remove('hidden');
-            setTimeout(() => overlay.classList.remove('opacity-0'), 10);
-            document.body.style.overflow = 'hidden';
-            this.isOpen = true;
+        // Перевіряємо, чи ми зараз відкрили чи закрили
+        const isNowClosed = sidebar.classList.contains('-translate-x-full');
+        this.isOpen = !isNowClosed;
+
+        if (isMobile) {
+            // Мобільна логіка: використовуємо оверлей
+            if (!isNowClosed) {
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+                document.body.style.overflow = 'hidden';
+            } else {
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+                document.body.style.overflow = '';
+            }
+        } else {
+            // ПК логіка: зсуваємо контент
+            // Якщо сайдбар закритий, прибираємо відступ (margin-left)
+            // Якщо відкритий, додаємо відступ
+            if (isNowClosed) {
+                mainContainer.classList.remove('md:ml-64');
+            } else {
+                mainContainer.classList.add('md:ml-64');
+            }
         }
     },
 
     close() {
+        // Примусове закриття (використовується при кліку на оверлей або посилання)
         const sidebar = document.getElementById('mainSidebar');
         const overlay = document.getElementById('sidebarOverlay');
         
-        if(sidebar && overlay) {
-            sidebar.classList.add('-translate-x-full');
-            overlay.classList.add('opacity-0');
-            setTimeout(() => overlay.classList.add('hidden'), 300);
-            document.body.style.overflow = '';
-            this.isOpen = false;
+        if (!sidebar.classList.contains('-translate-x-full')) {
+            // Якщо відкрито - емулюємо toggle
+            this.toggle();
         }
     }
 };
 
-// Pull to refresh (оновлення потягуванням вниз)
+// Pull to refresh
 let pullStartY = 0;
 let pullMoveY = 0;
 
