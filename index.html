@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#0f172a">
-    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>ServicePro CRM</title>
     
@@ -240,13 +240,10 @@
                 <i class="fas fa-chart-line"></i>
                 <span>Головна</span>
             </button>
-         <nav class="mobile-nav md:hidden">
-    <button class="mobile-nav-item" data-route="dashboard" onclick="window.navigateTo('dashboard')">
-        <i class="fas fa-chart-line"></i><span>Головна</span>
-    </button>
-    <button class="mobile-nav-item" data-route="orders" onclick="window.navigateTo('orders')">
-        <i class="fas fa-clipboard-list"></i><span>Замовлення</span>
-    </button>
+            <button class="mobile-nav-item" onclick="window.navigateTo('orders')" data-route="orders">
+                <i class="fas fa-clipboard-list"></i>
+                <span>Замовлення</span>
+            </button>
             <button class="mobile-nav-item" onclick="window.navigateTo('newOrder')" data-route="newOrder">
                 <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center -mt-4 border-4 border-gray-900">
                     <i class="fas fa-plus text-white"></i>
@@ -270,7 +267,3 @@
     <script type="module" src="js/app.js"></script>
 </body>
 </html>
-
-
-
-
