@@ -5,18 +5,23 @@ import InventoryModule from './inventory.js';
 import ServiceModule from './services.js';
 import ClientModule from './clients.js';
 import FinanceModule from './finance.js';
-import { Modal } from './ui.js';
+import { Modal, Sidebar } from './ui.js'; // ← Додати Sidebar сюди
 
 const Router = {
     currentRoute: '',
 
     navigate(route) {
         this.currentRoute = route;
-        window.currentRoute = route; // Для глобального доступу
+        window.currentRoute = route;
         const content = document.getElementById('contentArea');
 
         Modal.close();
-        if (window.Sidebar) window.Sidebar.close();
+        
+        // Закриття сайдбару при навігації (мобільна версія)
+        if (window.Sidebar) {
+            window.Sidebar.close();
+        }
+        
         switch (route) {
             case 'dashboard':
                 content.innerHTML = DashboardModule.render();
@@ -49,7 +54,36 @@ const Router = {
                 break;
             default:
                 this.navigate('dashboard');
+                return; // ← Додати return, щоб не продовжувати виконання
         }
+
+        // Оновлення активного пункту меню
+        this.updateActiveMenuItem(route);
+    },
+
+    // Нова функція для підсвітки активного пункту
+    updateActiveMenuItem(route) {
+        // Десктопне меню
+        document.querySelectorAll('#desktopNav button').forEach(btn => {
+            const btnRoute = btn.getAttribute('onclick')?.match(/'(\w+)'/)?.[1];
+            if (btnRoute === route) {
+                btn.classList.add('bg-gray-700', 'text-white');
+                btn.classList.remove('text-gray-300');
+            } else {
+                btn.classList.remove('bg-gray-700', 'text-white');
+                btn.classList.add('text-gray-300');
+            }
+        });
+
+        // Мобільне меню
+        document.querySelectorAll('.mobile-nav-item').forEach(item => {
+            const itemRoute = item.getAttribute('data-route');
+            if (itemRoute === route) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
     },
 
     renderKanban() {
@@ -152,5 +186,6 @@ const Router = {
 window.routerNavigate = (route) => Router.navigate(route);
 
 export default Router;
+
 
 
