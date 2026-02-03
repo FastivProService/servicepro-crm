@@ -1,12 +1,13 @@
 import Database from './modules/database.js';
 import Auth from './modules/auth.js';
 import Router from './modules/router.js';
-import { Modal, Toast } from './modules/ui.js';
+import { Modal, Toast, Sidebar } from './modules/ui.js';
 
-// Робимо доступними глобально (щоб ui.js не вжив злобні залежності)
+// Робимо доступними глобально
 window.Database = Database;
 window.Modal = Modal;
 window.Toast = Toast;
+window.Sidebar = Sidebar; // ← ДОДАТИ цей рядок
 
 const App = {
     init() {
@@ -20,8 +21,7 @@ const App = {
         Database.init();
         Router.initNavigation();
 
-        // Expose consistent navigation helpers used across HTML/templates
-        // Some markup calls window.navigateTo(...), router defines window.routerNavigate — provide both.
+        // Навігаційні хелпери
         window.navigateTo = (route) => Router.navigate(route);
         window.routerNavigate = (route) => Router.navigate(route);
 
