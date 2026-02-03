@@ -5,7 +5,7 @@ import InventoryModule from './inventory.js';
 import ServiceModule from './services.js';
 import ClientModule from './clients.js';
 import FinanceModule from './finance.js';
-import { Modal, Sidebar } from './ui.js'; // ← Додати Sidebar сюди
+import { Modal } from './ui.js';
 
 const Router = {
     currentRoute: '',
@@ -15,10 +15,11 @@ const Router = {
         window.currentRoute = route;
         const content = document.getElementById('contentArea');
 
+        // Закриваємо модалку
         Modal.close();
         
-        // Закриття сайдбару при навігації (мобільна версія)
-        if (window.Sidebar) {
+        // Закриваємо сайдбар (перевіряємо чи існує)
+        if (typeof window.Sidebar !== 'undefined' && window.Sidebar.close) {
             window.Sidebar.close();
         }
         
@@ -54,28 +55,28 @@ const Router = {
                 break;
             default:
                 this.navigate('dashboard');
-                return; // ← Додати return, щоб не продовжувати виконання
+                return;
         }
 
-        // Оновлення активного пункту меню
+        // Оновлюємо активний пункт меню
         this.updateActiveMenuItem(route);
     },
 
-    // Нова функція для підсвітки активного пункту
     updateActiveMenuItem(route) {
-        // Десктопне меню
+        // Десктоп
         document.querySelectorAll('#desktopNav button').forEach(btn => {
-            const btnRoute = btn.getAttribute('onclick')?.match(/'(\w+)'/)?.[1];
-            if (btnRoute === route) {
-                btn.classList.add('bg-gray-700', 'text-white');
-                btn.classList.remove('text-gray-300');
+            const onclick = btn.getAttribute('onclick') || '';
+            const isActive = onclick.includes(`'${route}'`);
+            if (isActive) {
+                btn.classList.add('bg-blue-600', 'text-white');
+                btn.classList.remove('text-gray-300', 'hover:bg-gray-700');
             } else {
-                btn.classList.remove('bg-gray-700', 'text-white');
+                btn.classList.remove('bg-blue-600', 'text-white');
                 btn.classList.add('text-gray-300');
             }
         });
 
-        // Мобільне меню
+        // Мобільна навігація
         document.querySelectorAll('.mobile-nav-item').forEach(item => {
             const itemRoute = item.getAttribute('data-route');
             if (itemRoute === route) {
@@ -103,9 +104,9 @@ const Router = {
                 </div>
                 <div class="space-y-3">
                     ${items.map(o => {
-            const c = Database.find('clients', o.clientId);
-            const total = OrderModule.calculateTotal(o);
-            return `
+                        const c = Database.find('clients', o.clientId);
+                        const total = OrderModule.calculateTotal(o);
+                        return `
                             <div class="bg-gray-800 p-3 rounded-lg border-l-4 ${bgColor} cursor-pointer hover:bg-gray-750 transition-all" onclick="window.openOrderDetail(${o.id})">
                                 <div class="flex justify-between items-start mb-1">
                                     <span class="text-xs font-mono text-blue-400 font-bold">${o.number}</span>
@@ -119,7 +120,7 @@ const Router = {
                                 </div>
                             </div>
                         `;
-        }).join('') || '<p class="text-gray-600 text-sm text-center py-4">Немає замовлень</p>'}
+                    }).join('') || '<p class="text-gray-600 text-sm text-center py-4">Немає замовлень</p>'}
                 </div>
             </div>
         `;
@@ -136,7 +137,6 @@ const Router = {
     },
 
     initNavigation() {
-        // index.html uses id="desktopNav" for sidebar; use that id
         const nav = document.getElementById('desktopNav');
         const menuItems = Auth.getMenu();
 
@@ -161,7 +161,7 @@ const Router = {
 
         nav.innerHTML = menuItems.map(item => `
             <button onclick="window.routerNavigate('${item}')" 
-                class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-gray-300 hover:text-white mb-1">
+                class="sidebar-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-gray-300 hover:text-white mb-1 transition-all">
                 <i class="fas ${icons[item]} w-5 ${colors[item] || ''}"></i>
                 <span>${this.translateRoute(item)}</span>
             </button>
@@ -182,10 +182,6 @@ const Router = {
     }
 };
 
-// Глобальна функція для навігації
 window.routerNavigate = (route) => Router.navigate(route);
 
 export default Router;
-
-
-
