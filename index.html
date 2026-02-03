@@ -240,10 +240,13 @@
                 <i class="fas fa-chart-line"></i>
                 <span>Головна</span>
             </button>
-            <button class="mobile-nav-item" onclick="window.navigateTo('orders')" data-route="orders">
-                <i class="fas fa-clipboard-list"></i>
-                <span>Замовлення</span>
-            </button>
+         <nav class="mobile-nav md:hidden">
+    <button class="mobile-nav-item" data-route="dashboard" onclick="window.navigateTo('dashboard')">
+        <i class="fas fa-chart-line"></i><span>Головна</span>
+    </button>
+    <button class="mobile-nav-item" data-route="orders" onclick="window.navigateTo('orders')">
+        <i class="fas fa-clipboard-list"></i><span>Замовлення</span>
+    </button>
             <button class="mobile-nav-item" onclick="window.navigateTo('newOrder')" data-route="newOrder">
                 <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center -mt-4 border-4 border-gray-900">
                     <i class="fas fa-plus text-white"></i>
@@ -267,3 +270,4 @@
     <script type="module" src="js/app.js"></script>
 </body>
 </html>
+
