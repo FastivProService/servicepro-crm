@@ -1,15 +1,31 @@
 import Database from './database.js';
 import { Modal } from './ui.js';
 
+const normalizePhone = (p) => (p || '').replace(/\s/g, '').replace(/^\+/, '');
+const getPhones = (c) => (c?.phones && Array.isArray(c.phones) ? c.phones : (c?.phone ? [c.phone] : []));
+
 const ClientModule = {
     searchByPhone(phone) {
-        return Database.query('clients').find(c => c.phone === phone);
+        const norm = normalizePhone(phone);
+        if (!norm) return null;
+        return Database.query('clients').find(c => getPhones(c).some(p => normalizePhone(p) === norm));
     },
 
-    getOrCreate(phone, name) {
-        let client = this.searchByPhone(phone);
+    getOrCreate(primaryPhone, name, additionalPhones = []) {
+        const allPhones = [primaryPhone, ...additionalPhones].map(p => (p || '').trim()).filter(Boolean);
+        const uniquePhones = [...new Set(allPhones)];
+        if (uniquePhones.length === 0) return null;
+
+        let client = this.searchByPhone(primaryPhone);
         if (!client) {
-            client = Database.create('clients', { name, phone, email: '', orders: 0 });
+            client = Database.create('clients', { name, phones: uniquePhones, email: '', orders: 0 });
+        } else {
+            const existing = getPhones(client);
+            const merged = [...new Set([...existing, ...uniquePhones])];
+            if (merged.length !== existing.length) {
+                client.phones = merged;
+                Database.save();
+            }
         }
         return client;
     },
@@ -70,7 +86,7 @@ const ClientModule = {
                         ${clients.map(c => `
                             <tr class="hover:bg-gray-800/50 transition-colors client-row">
                                 <td class="px-6 py-4 font-medium client-name">${c.name}</td>
-                                <td class="px-6 py-4 text-gray-400 client-phone">${c.phone}</td>
+                                <td class="px-6 py-4 text-gray-400 client-phone">${getPhones(c).join(', ')}</td>
                                 <td class="px-6 py-4">
                                     <span class="bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full text-sm">${c.orders}</span>
                                 </td>
@@ -98,9 +114,9 @@ const ClientModule = {
                 <div class="flex justify-between items-start mb-3">
                     <div>
                         <div class="font-bold text-lg text-white client-name">${client.name}</div>
-                        <a href="tel:${client.phone}" class="text-blue-400 text-sm flex items-center gap-2 mt-1 client-phone">
-                            <i class="fas fa-phone-alt"></i> ${client.phone}
-                        </a>
+                        <div class="text-blue-400 text-sm flex flex-col gap-1 mt-1 client-phone">
+                            ${getPhones(client).map(p => `<a href="tel:${p}" class="flex items-center gap-2"><i class="fas fa-phone-alt"></i> ${p}</a>`).join('')}
+                        </div>
                     </div>
                     <span class="bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap">
                         ${client.orders} зам.
@@ -124,6 +140,15 @@ const ClientModule = {
             window.Toast?.show('Клієнт не знайдений', 'error');
             return;
         }
+        const phones = getPhones(client);
+        const phonesHtml = phones.length > 0 
+            ? phones.map((p, i) => `
+                <div class="flex gap-2 items-center phone-row">
+                    <input type="tel" class="edit-client-phone flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-cyan-500 focus:outline-none" value="${(p || '').replace(/"/g, '&quot;')}" placeholder="+380...">
+                    <button type="button" onclick="this.closest('.phone-row').remove()" class="text-red-400 hover:text-red-300 p-2" title="Видалити"><i class="fas fa-times"></i></button>
+                </div>
+            `).join('')
+            : '';
         window.Modal.open(`
             <div class="p-6">
                 <h3 class="text-xl font-bold mb-4">Редагувати клієнта</h3>
@@ -134,9 +159,17 @@ const ClientModule = {
                             class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 focus:border-cyan-500 focus:outline-none">
                     </div>
                     <div>
-                        <label class="block text-sm text-gray-400 mb-2">Телефон *</label>
-                        <input type="tel" id="editClientPhone" required value="${(client.phone || '').replace(/"/g, '&quot;')}"
-                            class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 focus:border-cyan-500 focus:outline-none">
+                        <label class="block text-sm text-gray-400 mb-2">Телефони *</label>
+                        <div id="editClientPhonesList" class="space-y-2">
+                            ${phonesHtml || `
+                            <div class="flex gap-2 items-center phone-row">
+                                <input type="tel" class="edit-client-phone flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-cyan-500 focus:outline-none" placeholder="+380...">
+                                <button type="button" onclick="this.closest('.phone-row').remove()" class="text-red-400 hover:text-red-300 p-2" title="Видалити"><i class="fas fa-times"></i></button>
+                            </div>`}
+                        </div>
+                        <button type="button" onclick="window.addClientPhoneRow()" class="mt-2 text-cyan-400 hover:text-cyan-300 text-sm flex items-center gap-1">
+                            <i class="fas fa-plus"></i> Додати телефон
+                        </button>
                     </div>
                     <div>
                         <label class="block text-sm text-gray-400 mb-2">Email</label>
@@ -153,15 +186,22 @@ const ClientModule = {
     },
 
     saveEdit(clientId, data) {
-        const clients = Database.query('clients');
-        const existing = clients.find(c => c.phone === data.phone && c.id !== clientId);
-        if (existing) {
-            window.Toast?.show('Клієнт з таким телефоном вже існує', 'error');
+        const phones = data.phones.filter(p => (p || '').trim());
+        if (phones.length === 0) {
+            window.Toast?.show('Додайте хоча б один телефон', 'error');
             return false;
+        }
+        const clients = Database.query('clients');
+        for (const p of phones) {
+            const existing = clients.find(c => c.id !== clientId && getPhones(c).some(cp => normalizePhone(cp) === normalizePhone(p)));
+            if (existing) {
+                window.Toast?.show(`Телефон ${p} вже належить іншому клієнту`, 'error');
+                return false;
+            }
         }
         Database.update('clients', clientId, {
             name: data.name,
-            phone: data.phone,
+            phones: phones,
             email: data.email || ''
         });
         return true;
@@ -178,7 +218,9 @@ const ClientModule = {
         window.Modal.open(`
             <div class="p-6">
                 <h3 class="text-xl font-bold mb-2 text-white">${client.name}</h3>
-                <a href="tel:${client.phone}" class="text-blue-400 block mb-6"><i class="fas fa-phone mr-2"></i>${client.phone}</a>
+                <div class="space-y-1 mb-6">
+                    ${getPhones(client).map(p => `<a href="tel:${p}" class="text-blue-400 block"><i class="fas fa-phone mr-2"></i>${p}</a>`).join('')}
+                </div>
                 
                 <h4 class="font-semibold mb-3 text-gray-300">Історія замовлень (${orders.length})</h4>
                 <div class="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
@@ -226,11 +268,23 @@ window.filterClients = () => {
 
 window.editClient = (id) => ClientModule.showEditModal(id);
 window.showClientHistory = (id) => ClientModule.showHistory(id);
+window.addClientPhoneRow = () => {
+    const list = document.getElementById('editClientPhonesList');
+    if (!list) return;
+    const div = document.createElement('div');
+    div.className = 'flex gap-2 items-center phone-row';
+    div.innerHTML = `
+        <input type="tel" class="edit-client-phone flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-cyan-500 focus:outline-none" placeholder="+380...">
+        <button type="button" onclick="this.closest('.phone-row').remove()" class="text-red-400 hover:text-red-300 p-2" title="Видалити"><i class="fas fa-times"></i></button>
+    `;
+    list.appendChild(div);
+};
 window.saveEditedClient = (e, id) => {
     e.preventDefault();
+    const phones = [...document.querySelectorAll('.edit-client-phone')].map(inp => (inp.value || '').trim()).filter(Boolean);
     const data = {
         name: document.getElementById('editClientName').value.trim(),
-        phone: document.getElementById('editClientPhone').value.trim(),
+        phones,
         email: (document.getElementById('editClientEmail').value || '').trim()
     };
     if (ClientModule.saveEdit(id, data)) {

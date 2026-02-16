@@ -8,22 +8,29 @@ const Database = {
         transactions: [],
         user: null,
         users: [],
-        roleConfig: null
+        roleConfig: null,
+        printConfig: null
     },
 
     init() {
         const saved = localStorage.getItem('servicePro_v2');
         if (saved) {
             const parsed = JSON.parse(saved);
+            const clients = (parsed.clients ?? []).map(c => {
+                if (!c.phones && c.phone) c.phones = [c.phone];
+                if (!c.phones) c.phones = [];
+                return c;
+            });
             this.data = {
-                clients: parsed.clients ?? [],
+                clients,
                 orders: parsed.orders ?? [],
                 inventory: parsed.inventory ?? [],
                 services: parsed.services ?? [],
                 transactions: parsed.transactions ?? [],
                 user: parsed.user ?? null,
                 users: parsed.users ?? [],
-                roleConfig: parsed.roleConfig ?? null
+                roleConfig: parsed.roleConfig ?? null,
+                printConfig: parsed.printConfig ?? null
             };
         } else {
             this.seedData();
@@ -36,8 +43,8 @@ const Database = {
 
     seedData() {
         this.data.clients = [
-            { id: 1, name: "Петренко О.В.", phone: "+380671234567", email: "", orders: 2 },
-            { id: 2, name: "Іваненко М.С.", phone: "+380501112233", email: "", orders: 1 }
+            { id: 1, name: "Петренко О.В.", phones: ["+380671234567"], email: "", orders: 2 },
+            { id: 2, name: "Іваненко М.С.", phones: ["+380501112233"], email: "", orders: 1 }
         ];
         
         this.data.inventory = [

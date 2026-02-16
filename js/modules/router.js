@@ -7,6 +7,8 @@ import ServiceModule from './services.js';
 import ClientModule from './clients.js';
 import FinanceModule from './finance.js';
 import SettingsModule from './settings.js';
+import PrintEditorModule from './printEditor.js';
+import RoleSettingsModule from './roleSettings.js';
 import { Modal } from './ui.js';
 
 const Router = {
@@ -62,6 +64,20 @@ const Router = {
                     content.innerHTML = `<div class="text-center py-20 text-gray-500">Немає доступу до налаштувань</div>`;
                 }
                 break;
+            case 'printEditor':
+                if (Auth.hasAccess('settings') || Auth.currentUser?.role === 'admin') {
+                    content.innerHTML = PrintEditorModule.render();
+                } else {
+                    content.innerHTML = `<div class="text-center py-20 text-gray-500">Немає доступу</div>`;
+                }
+                break;
+            case 'roleSettings':
+                if (Auth.hasAccess('settings') || Auth.currentUser?.role === 'admin') {
+                    content.innerHTML = RoleSettingsModule.render();
+                } else {
+                    content.innerHTML = `<div class="text-center py-20 text-gray-500">Немає доступу</div>`;
+                }
+                break;
             default:
                 this.navigate('dashboard');
                 return;
@@ -72,10 +88,11 @@ const Router = {
     },
 
     updateActiveMenuItem(route) {
+        const effectiveRoute = (route === 'printEditor' || route === 'roleSettings') ? 'settings' : route;
         // Десктоп
         document.querySelectorAll('#desktopNav button').forEach(btn => {
             const onclick = btn.getAttribute('onclick') || '';
-            const isActive = onclick.includes(`'${route}'`);
+            const isActive = onclick.includes(`'${effectiveRoute}'`);
             if (isActive) {
                 btn.classList.add('bg-blue-600', 'text-white');
                 btn.classList.remove('text-gray-300', 'hover:bg-gray-700');
@@ -88,7 +105,7 @@ const Router = {
         // Мобільна навігація
         document.querySelectorAll('.mobile-nav-item').forEach(item => {
             const itemRoute = item.getAttribute('data-route');
-            if (itemRoute === route) {
+            if (itemRoute === effectiveRoute) {
                 item.classList.add('active');
             } else {
                 item.classList.remove('active');

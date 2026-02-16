@@ -2,6 +2,8 @@ import Database from './database.js';
 import ClientModule from './clients.js';
 import InventoryModule from './inventory.js';
 
+const getClientPhones = (c) => (c?.phones && c.phones.length) ? c.phones : (c?.phone ? [c.phone] : []);
+
 const OrderModule = {
     currentOrder: null,
 
@@ -13,7 +15,10 @@ const OrderModule = {
     },
 
     create(data) {
-        const client = ClientModule.getOrCreate(data.phone, data.clientName);
+        const phones = data.phones || [data.phone];
+        const primary = phones[0] || data.phone;
+        const additional = phones.slice(1);
+        const client = ClientModule.getOrCreate(primary, data.clientName, additional);
         ClientModule.incrementOrders(client.id);
         
         const order = Database.create('orders', {
@@ -243,14 +248,21 @@ const OrderModule = {
                         <h3 class="font-semibold mb-3 md:mb-4 text-blue-400 text-sm md:text-base"><i class="fas fa-user mr-2"></i>Клієнт</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm text-gray-400 mb-2">Телефон *</label>
-                                <input type="tel" name="phone" required onblur="window.autoFillClient(this)"
-                                    class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 md:py-2 focus:border-blue-500 focus:outline-none text-base" placeholder="+380...">
-                            </div>
-                            <div>
                                 <label class="block text-sm text-gray-400 mb-2">ПІБ *</label>
                                 <input type="text" name="clientName" required
                                     class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 md:py-2 focus:border-blue-500 focus:outline-none text-base">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-2">Телефони *</label>
+                                <div id="orderPhonesList" class="space-y-2">
+                                    <div class="flex gap-2 items-center order-phone-row">
+                                        <input type="tel" class="order-phone-input flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 md:py-2 focus:border-blue-500 focus:outline-none text-base" placeholder="+380..." required onblur="window.autoFillClient(this)">
+                                        <button type="button" onclick="window.removeOrderPhoneRow(this)" class="text-red-400 hover:text-red-300 p-2" title="Видалити"><i class="fas fa-times"></i></button>
+                                    </div>
+                                </div>
+                                <button type="button" onclick="window.addOrderPhoneRow()" class="mt-2 text-blue-400 hover:text-blue-300 text-sm flex items-center gap-1">
+                                    <i class="fas fa-plus"></i> Додати телефон
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -334,9 +346,7 @@ const OrderModule = {
                     <div class="glass p-4 rounded-lg">
                         <div class="text-sm text-gray-400 mb-1">Клієнт</div>
                         <div class="font-semibold">${client?.name || 'Клієнт не знайдений'}</div>
-                        ${client?.phone ? `<a href="tel:${client.phone}" class="text-blue-400 text-sm flex items-center gap-1 mt-1">
-                            <i class="fas fa-phone"></i> ${client.phone}
-                        </a>` : ''}
+                        ${getClientPhones(client).length ? getClientPhones(client).map(p => `<a href="tel:${p}" class="text-blue-400 text-sm flex items-center gap-1 mt-1"><i class="fas fa-phone"></i> ${p}</a>`).join('') : ''}
                     </div>
                     <div class="glass p-4 rounded-lg">
                         <div class="text-sm text-gray-400 mb-1">Пристрій</div>
@@ -483,14 +493,29 @@ const OrderModule = {
         if (!order) return;
         const client = Database.find('clients', order.clientId);
         const total = this.calculateTotal(order);
-        
+        const format = Database.data?.printConfig?.format || 'a4';
+
         const printWindow = window.open('', '_blank');
-        const html = `
+        const html = format === '58mm' ? this.getPrintHtml58mm(order, client, total) : this.getPrintHtmlA4(order, client, total);
+        
+        printWindow.document.write(html);
+        printWindow.document.close();
+        printWindow.print();
+    },
+
+    getPrintHtmlA4(order, client, total) {
+        const cfg = Database.data?.printConfig || {};
+        const companyName = cfg.companyName || 'ТОВ "ServicePro"';
+        const companyAddress = cfg.companyAddress || '';
+        const companyPhone = cfg.companyPhone || '';
+        const docTitle = cfg.documentTitle || 'АКТ ВИКОНАНИХ РОБІТ';
+        const execInfo = [companyName, companyAddress, companyPhone].filter(Boolean).join(', ');
+        return `
             <html>
             <head>
                 <title>Акт ${order.number}</title>
                 <style>
-                    body { font-family: Arial, sans-serif; padding: 40px; }
+                    body { font-family: Arial, sans-serif; padding: 40px; max-width: 210mm; }
                     .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
                     .section { margin-bottom: 20px; }
                     table { width: 100%; border-collapse: collapse; margin: 20px 0; }
@@ -502,59 +527,32 @@ const OrderModule = {
             </head>
             <body>
                 <div class="header">
-                    <h1>АКТ ВИКОНАНИХ РОБІТ</h1>
+                    <h1>${docTitle}</h1>
                     <h2>№ ${order.number}</h2>
                     <p>від ${new Date().toLocaleDateString('uk-UA')}</p>
                 </div>
-                
                 <div class="section">
-                    <p><strong>Виконавець:</strong> ТОВ "ServicePro"</p>
-                    <p><strong>Замовник:</strong> ${client?.name || '—'}, тел: ${client?.phone || '—'}</p>
+                    <p><strong>Виконавець:</strong> ${execInfo || companyName}</p>
+                    <p><strong>Замовник:</strong> ${client?.name || '—'}, тел: ${getClientPhones(client).join(', ') || '—'}</p>
                 </div>
-                
                 <div class="section">
                     <p><strong>Пристрій:</strong> ${order.deviceBrand} ${order.deviceModel}</p>
                     <p><strong>S/N:</strong> ${order.deviceSerial || '—'}</p>
                     <p><strong>Опис проблеми:</strong> ${order.issue}</p>
                 </div>
-                
                 <table>
                     <thead>
-                        <tr>
-                            <th>№</th>
-                            <th>Найменування</th>
-                            <th>К-ть</th>
-                            <th>Ціна</th>
-                            <th>Сума</th>
-                        </tr>
+                        <tr><th>№</th><th>Найменування</th><th>К-ть</th><th>Ціна</th><th>Сума</th></tr>
                     </thead>
                     <tbody>
-                        ${order.parts?.map((p, i) => `
-                            <tr>
-                                <td>${i + 1}</td>
-                                <td>${p.name}</td>
-                                <td>${p.qty}</td>
-                                <td>${p.price}</td>
-                                <td>${p.qty * p.price}</td>
-                            </tr>
-                        `).join('') || ''}
-                        ${order.services?.map((s, i) => `
-                            <tr>
-                                <td>${(order.parts?.length || 0) + i + 1}</td>
-                                <td>${s.name} (послуга)</td>
-                                <td>1</td>
-                                <td>${s.price}</td>
-                                <td>${s.price}</td>
-                            </tr>
-                        `).join('') || ''}
+                        ${order.parts?.map((p, i) => `<tr><td>${i + 1}</td><td>${p.name}</td><td>${p.qty}</td><td>${p.price}</td><td>${p.qty * p.price}</td></tr>`).join('') || ''}
+                        ${order.services?.map((s, i) => `<tr><td>${(order.parts?.length || 0) + i + 1}</td><td>${s.name}</td><td>1</td><td>${s.price}</td><td>${s.price}</td></tr>`).join('') || ''}
                     </tbody>
                 </table>
-                
                 <div class="total">
                     Всього: ₴${total}<br>
                     ${order.prepayment > 0 ? `Аванс: ₴${order.prepayment}<br>До сплати: ₴${total - order.prepayment}` : ''}
                 </div>
-                
                 <div class="signatures">
                     <div>Виконавець _________________</div>
                     <div>Замовник _________________</div>
@@ -562,10 +560,56 @@ const OrderModule = {
             </body>
             </html>
         `;
-        
-        printWindow.document.write(html);
-        printWindow.document.close();
-        printWindow.print();
+    },
+
+    getPrintHtml58mm(order, client, total) {
+        const cfg = Database.data?.printConfig || {};
+        const docTitle = cfg.documentTitle || 'АКТ ВИКОНАНИХ РОБІТ';
+        const companyName = cfg.companyName || 'ТОВ "ServicePro"';
+        return `
+            <html>
+            <head>
+                <title>Акт ${order.number}</title>
+                <style>
+                    @page { size: 58mm auto; margin: 2mm; }
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body { font-family: 'Courier New', monospace; font-size: 10px; width: 48mm; max-width: 48mm; padding: 2mm; line-height: 1.2; }
+                    .center { text-align: center; }
+                    .bold { font-weight: bold; }
+                    .border-b { border-bottom: 1px dashed #000; padding-bottom: 2px; margin-bottom: 2px; }
+                    table { width: 100%; font-size: 9px; border-collapse: collapse; }
+                    td { padding: 1px 2px; }
+                    .r { text-align: right; }
+                    .total { margin-top: 3px; font-weight: bold; text-align: right; font-size: 11px; }
+                </style>
+            </head>
+            <body>
+                <div class="center bold border-b">${docTitle}</div>
+                <div class="center bold">№ ${order.number}</div>
+                <div class="center" style="font-size: 8px;">${new Date().toLocaleDateString('uk-UA')}</div>
+                ${companyName ? `<div class="center" style="font-size: 8px; margin-top: 2px;">${companyName}</div>` : ''}
+                <div class="border-b" style="margin-top: 4px;">
+                    <div><span class="bold">Замовник:</span> ${client?.name || '—'}</div>
+                    <div>Тел: ${getClientPhones(client).join(', ') || '—'}</div>
+                </div>
+                <div class="border-b" style="margin-top: 2px;">
+                    <div><span class="bold">Пристрій:</span> ${order.deviceBrand} ${order.deviceModel}</div>
+                    <div>Проблема: ${(order.issue || '').substring(0, 40)}${(order.issue || '').length > 40 ? '...' : ''}</div>
+                </div>
+                <table style="margin-top: 3px;">
+                    ${order.parts?.map((p, i) => `<tr><td>${i + 1}. ${p.name} ${p.qty}×${p.price}</td><td class="r">${p.qty * p.price}</td></tr>`).join('') || ''}
+                    ${order.services?.map((s, i) => `<tr><td>${(order.parts?.length || 0) + i + 1}. ${s.name}</td><td class="r">${s.price}</td></tr>`).join('') || ''}
+                </table>
+                <div class="total border-b" style="padding-top: 3px;">
+                    Всього: ₴${total}
+                    ${order.prepayment > 0 ? `<br>Аванс: ₴${order.prepayment}<br>До сплати: ₴${total - order.prepayment}` : ''}
+                </div>
+                <div style="margin-top: 8px; font-size: 8px; text-align: center;">
+                    Виконавець ___________  Замовник ___________
+                </div>
+            </body>
+            </html>
+        `;
     }
 };
 
@@ -582,14 +626,53 @@ window.autoFillClient = (input) => {
     const client = ClientModule.searchByPhone(input.value);
     if (client) {
         document.querySelector('[name="clientName"]').value = client.name;
+        const phones = getClientPhones(client);
+        if (phones.length > 0) {
+            const list = document.getElementById('orderPhonesList');
+            if (list) {
+                list.innerHTML = phones.map((p, i) => `
+                    <div class="flex gap-2 items-center order-phone-row">
+                        <input type="tel" class="order-phone-input flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 md:py-2 focus:border-blue-500 focus:outline-none text-base" value="${(p || '').replace(/"/g, '&quot;')}" placeholder="+380..." ${i === 0 ? 'required' : ''} onblur="window.autoFillClient(this)">
+                        <button type="button" onclick="window.removeOrderPhoneRow(this)" class="text-red-400 hover:text-red-300 p-2" title="Видалити"><i class="fas fa-times"></i></button>
+                    </div>
+                `).join('');
+            }
+        }
     }
+};
+
+window.addOrderPhoneRow = () => {
+    const list = document.getElementById('orderPhonesList');
+    if (!list) return;
+    const div = document.createElement('div');
+    div.className = 'flex gap-2 items-center order-phone-row';
+    div.innerHTML = `
+        <input type="tel" class="order-phone-input flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 md:py-2 focus:border-blue-500 focus:outline-none text-base" placeholder="+380...">
+        <button type="button" onclick="window.removeOrderPhoneRow(this)" class="text-red-400 hover:text-red-300 p-2" title="Видалити"><i class="fas fa-times"></i></button>
+    `;
+    list.appendChild(div);
+};
+window.removeOrderPhoneRow = (btn) => {
+    const rows = document.querySelectorAll('.order-phone-row');
+    if (rows.length <= 1) {
+        window.Toast.show('Потрібен хоча б один телефон', 'warning');
+        return;
+    }
+    btn.closest('.order-phone-row')?.remove();
 };
 
 window.submitNewOrder = (e) => {
     e.preventDefault();
     const form = e.target;
     const data = Object.fromEntries(new FormData(form));
+    data.phones = [...document.querySelectorAll('.order-phone-input')].map(inp => inp.value.trim()).filter(Boolean);
+    data.phone = data.phones[0] || data.phone;
     data.prepayment = parseFloat(data.prepayment) || 0;
+    
+    if (!data.phone) {
+        window.Toast.show('Введіть хоча б один телефон', 'error');
+        return;
+    }
     
     OrderModule.create(data);
     window.Toast.show('Замовлення створено!', 'success');
