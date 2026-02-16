@@ -120,13 +120,20 @@
                 <h1 class="text-xl md:text-2xl font-bold">ServicePro CRM</h1>
                 <p class="text-gray-400 mt-2 text-sm md:text-base">Система управління сервісом</p>
             </div>
-            <div class="space-y-4">
-                <select id="authRole" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-base focus:border-blue-500 focus:outline-none touch-target">
-                    <option value="admin">Адміністратор</option>
-                    <option value="manager">Менеджер</option>
-                    <option value="technician">Майстер</option>
-                </select>
-                <button onclick="App.init()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-all touch-target mobile-btn">
+            <div class="space-y-4" id="authFormContainer">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">Оберіть користувача</label>
+                    <select id="authUser" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-base focus:border-blue-500 focus:outline-none touch-target">
+                        <option value="">Завантаження...</option>
+                    </select>
+                </div>
+                <div id="authPasswordGroup" class="hidden">
+                    <label class="block text-sm text-gray-400 mb-2">Пароль</label>
+                    <input type="password" id="authPassword" placeholder="Введіть пароль"
+                        class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-base focus:border-blue-500 focus:outline-none touch-target">
+                </div>
+                <div id="authError" class="hidden text-red-400 text-sm"></div>
+                <button onclick="App.doLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-all touch-target mobile-btn">
                     Увійти в систему
                 </button>
             </div>

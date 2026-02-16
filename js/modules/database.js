@@ -6,7 +6,9 @@ const Database = {
         inventory: [],
         services: [],
         transactions: [],
-        user: null
+        user: null,
+        users: [],
+        roleConfig: null
     },
 
     init() {
@@ -19,7 +21,9 @@ const Database = {
                 inventory: parsed.inventory ?? [],
                 services: parsed.services ?? [],
                 transactions: parsed.transactions ?? [],
-                user: parsed.user ?? null
+                user: parsed.user ?? null,
+                users: parsed.users ?? [],
+                roleConfig: parsed.roleConfig ?? null
             };
         } else {
             this.seedData();
@@ -65,6 +69,12 @@ const Database = {
                 parts: [{ partId: 1, qty: 1, price: 2800, name: "Дисплей iPhone 12" }],
                 services: [{ serviceId: 2, price: 500, name: "Заміна дисплея" }]
             }
+        ];
+
+        this.data.users = [
+            { id: 1, name: 'Адмін', login: 'admin', role: 'admin', password: '', createdAt: new Date().toISOString() },
+            { id: 2, name: 'Менеджер', login: 'manager', role: 'manager', password: '', createdAt: new Date().toISOString() },
+            { id: 3, name: 'Майстер', login: 'master', role: 'technician', password: '', createdAt: new Date().toISOString() }
         ];
 
         this.save();

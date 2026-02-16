@@ -6,6 +6,7 @@ import InventoryModule from './inventory.js';
 import ServiceModule from './services.js';
 import ClientModule from './clients.js';
 import FinanceModule from './finance.js';
+import SettingsModule from './settings.js';
 import { Modal } from './ui.js';
 
 const Router = {
@@ -53,6 +54,13 @@ const Router = {
                 break;
             case 'kanban':
                 this.renderKanban();
+                break;
+            case 'settings':
+                if (Auth.hasAccess('settings') || Auth.currentUser?.role === 'admin') {
+                    content.innerHTML = SettingsModule.render();
+                } else {
+                    content.innerHTML = `<div class="text-center py-20 text-gray-500">Немає доступу до налаштувань</div>`;
+                }
                 break;
             default:
                 this.navigate('dashboard');
@@ -149,7 +157,8 @@ const Router = {
             inventory: 'fa-boxes',
             services: 'fa-list-alt',
             clients: 'fa-users',
-            finance: 'fa-wallet'
+            finance: 'fa-wallet',
+            settings: 'fa-cog'
         };
 
         const colors = {
@@ -158,7 +167,8 @@ const Router = {
             inventory: 'text-purple-400',
             services: 'text-cyan-400',
             clients: 'text-green-400',
-            finance: 'text-emerald-400'
+            finance: 'text-emerald-400',
+            settings: 'text-amber-400'
         };
 
         nav.innerHTML = menuItems.map(item => `
@@ -178,7 +188,8 @@ const Router = {
             inventory: 'Склад',
             services: 'Послуги',
             clients: 'Клієнти',
-            finance: 'Фінанси'
+            finance: 'Фінанси',
+            settings: 'Налаштування'
         };
         return map[route] || route;
     }
