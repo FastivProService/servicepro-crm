@@ -75,9 +75,14 @@ const ClientModule = {
                                     <span class="bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full text-sm">${c.orders}</span>
                                 </td>
                                 <td class="px-6 py-4 text-right">
-                                    <button onclick="window.showClientHistory(${c.id})" class="text-blue-400 hover:text-blue-300">
-                                        <i class="fas fa-history"></i>
-                                    </button>
+                                    <div class="flex gap-2 justify-end">
+                                        <button onclick="window.editClient(${c.id})" class="text-cyan-400 hover:text-cyan-300 p-2" title="Редагувати">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button onclick="window.showClientHistory(${c.id})" class="text-blue-400 hover:text-blue-300 p-2" title="Історія">
+                                            <i class="fas fa-history"></i>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         `).join('')}
@@ -101,13 +106,65 @@ const ClientModule = {
                         ${client.orders} зам.
                     </span>
                 </div>
-                <div class="flex justify-end border-t border-gray-700 pt-3">
-                    <button onclick="window.showClientHistory(${client.id})" class="w-full py-2 bg-gray-700/50 hover:bg-gray-700 rounded-lg text-gray-300 transition-colors flex items-center justify-center gap-2 text-sm">
-                        <i class="fas fa-history text-blue-400"></i> Історія обслуговування
+                <div class="flex gap-2 border-t border-gray-700 pt-3">
+                    <button onclick="window.editClient(${client.id})" class="flex-1 py-2 bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-400 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm">
+                        <i class="fas fa-edit"></i> Редагувати
+                    </button>
+                    <button onclick="window.showClientHistory(${client.id})" class="flex-1 py-2 bg-gray-700/50 hover:bg-gray-700 text-gray-300 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm">
+                        <i class="fas fa-history text-blue-400"></i> Історія
                     </button>
                 </div>
             </div>
         `;
+    },
+
+    showEditModal(clientId) {
+        const client = Database.find('clients', clientId);
+        if (!client) {
+            window.Toast?.show('Клієнт не знайдений', 'error');
+            return;
+        }
+        window.Modal.open(`
+            <div class="p-6">
+                <h3 class="text-xl font-bold mb-4">Редагувати клієнта</h3>
+                <form onsubmit="window.saveEditedClient(event, ${client.id})" class="space-y-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">ПІБ *</label>
+                        <input type="text" id="editClientName" required value="${(client.name || '').replace(/"/g, '&quot;')}"
+                            class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 focus:border-cyan-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Телефон *</label>
+                        <input type="tel" id="editClientPhone" required value="${(client.phone || '').replace(/"/g, '&quot;')}"
+                            class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 focus:border-cyan-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">Email</label>
+                        <input type="email" id="editClientEmail" value="${(client.email || '').replace(/"/g, '&quot;')}"
+                            class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 focus:border-cyan-500 focus:outline-none" placeholder="email@example.com">
+                    </div>
+                    <div class="flex gap-3 mt-6">
+                        <button type="submit" class="flex-1 bg-cyan-600 hover:bg-cyan-700 py-3 rounded-lg text-white font-semibold">Зберегти</button>
+                        <button type="button" onclick="window.Modal.close()" class="px-4 py-3 border border-gray-600 rounded-lg hover:bg-gray-700 transition-colors">Скасувати</button>
+                    </div>
+                </form>
+            </div>
+        `);
+    },
+
+    saveEdit(clientId, data) {
+        const clients = Database.query('clients');
+        const existing = clients.find(c => c.phone === data.phone && c.id !== clientId);
+        if (existing) {
+            window.Toast?.show('Клієнт з таким телефоном вже існує', 'error');
+            return false;
+        }
+        Database.update('clients', clientId, {
+            name: data.name,
+            phone: data.phone,
+            email: data.email || ''
+        });
+        return true;
     },
 
     showHistory(clientId) {
@@ -138,7 +195,7 @@ const ClientModule = {
                         </div>
                     `).join('') || '<div class="text-center py-4 text-gray-500 bg-gray-900 rounded-xl">Немає замовлень</div>'}
                 </div>
-                <button onclick="Modal.close()" class="mt-6 w-full bg-gray-700 hover:bg-gray-600 py-3 rounded-xl font-semibold text-white transition-colors">Закрити</button>
+                <button onclick="window.Modal.close()" class="mt-6 w-full bg-gray-700 hover:bg-gray-600 py-3 rounded-xl font-semibold text-white transition-colors">Закрити</button>
             </div>
         `);
     }
@@ -167,6 +224,20 @@ window.filterClients = () => {
     }
 };
 
+window.editClient = (id) => ClientModule.showEditModal(id);
 window.showClientHistory = (id) => ClientModule.showHistory(id);
+window.saveEditedClient = (e, id) => {
+    e.preventDefault();
+    const data = {
+        name: document.getElementById('editClientName').value.trim(),
+        phone: document.getElementById('editClientPhone').value.trim(),
+        email: (document.getElementById('editClientEmail').value || '').trim()
+    };
+    if (ClientModule.saveEdit(id, data)) {
+        window.Modal.close();
+        window.Toast.show('Клієнта оновлено', 'success');
+        import('./router.js').then(m => m.default.navigate('clients'));
+    }
+};
 
 export default ClientModule;

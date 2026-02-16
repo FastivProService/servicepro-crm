@@ -11,7 +11,7 @@ const InventoryModule = {
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-3xl font-bold">Склад запчастин</h2>
                 <div class="flex gap-2">
-                    <button onclick="window.showAddPartModal()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+                    <button onclick="window.openAddPartModal()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
                         <i class="fas fa-plus"></i> Нова запчастина
                     </button>
                     <button onclick="window.showSupplyModal()" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
@@ -101,6 +101,9 @@ const InventoryModule = {
                         <button onclick="window.adjustStock(${item.id}, 'remove')" class="text-orange-400 hover:text-orange-300" title="Списати">
                             <i class="fas fa-minus-circle"></i>
                         </button>
+                        <button onclick="window.deletePart(${item.id})" class="text-red-400 hover:text-red-300" title="Видалити">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                 </div>
                 
@@ -140,8 +143,11 @@ const InventoryModule = {
                         class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
                     
                     <div class="grid grid-cols-2 gap-4">
-                        <input type="text" id="partSku" placeholder="Артикул" required 
-                            class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
+                        <div>
+                            <input type="text" id="partSku" placeholder="Артикул (залиште порожнім для автогенерації)"
+                                class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
+                            <div class="text-xs text-gray-500 mt-1">Буде згенеровано: PART-XXXX</div>
+                        </div>
                         <input type="text" id="partCategory" placeholder="Категорія" list="categories" required 
                             class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
                     </div>
@@ -184,11 +190,23 @@ const InventoryModule = {
         `);
     },
 
+    generateSku() {
+        const items = Database.query('inventory');
+        const partNumbers = items
+            .map(i => (i.sku || '').match(/^PART-(\d+)$/))
+            .filter(Boolean)
+            .map(m => parseInt(m[1], 10));
+        const nextNum = partNumbers.length > 0 ? Math.max(...partNumbers) + 1 : 1;
+        return `PART-${String(nextNum).padStart(4, '0')}`;
+    },
+
     save(e) {
         e.preventDefault();
+        let sku = (document.getElementById('partSku').value || '').trim();
+        if (!sku) sku = this.generateSku();
         Database.create('inventory', {
             name: document.getElementById('partName').value,
-            sku: document.getElementById('partSku').value,
+            sku: sku,
             category: document.getElementById('partCategory').value,
             qty: parseInt(document.getElementById('partQty').value) || 0,
             cost: parseFloat(document.getElementById('partCost').value) || 0,
@@ -455,6 +473,19 @@ const InventoryModule = {
             part.qty += qty;
             Database.save();
         }
+    },
+
+    deletePart(id) {
+        const part = Database.find('inventory', id);
+        if (!part) return;
+        const orders = Database.query('orders') || [];
+        const usedIn = orders.filter(o => o.parts?.some(p => p.partId == id));
+        if (usedIn.length > 0) {
+            if (!confirm(`Запчастина "${part.name}" використовується в ${usedIn.length} замовленні(ях). Видалити все одно?`)) return;
+        } else if (!confirm(`Видалити запчастину "${part.name}"?`)) return;
+        Database.delete('inventory', id);
+        window.Toast.show('Запчастину видалено', 'info');
+        this.refresh();
     }
 };
 
@@ -462,6 +493,7 @@ const InventoryModule = {
 window.openAddPartModal = () => InventoryModule.showAddModal();
 window.saveNewPart = (e) => InventoryModule.save(e);
 window.editPart = (id) => InventoryModule.edit(id);
+window.deletePart = (id) => InventoryModule.deletePart(id);
 window.saveEditedPart = (e, id) => InventoryModule.saveEdit(e, id);
 window.adjustStock = (id, action) => InventoryModule.adjustStock(id, action);
 window.saveStockAdjustment = (e, id, action) => InventoryModule.saveAdjustment(e, id, action);
