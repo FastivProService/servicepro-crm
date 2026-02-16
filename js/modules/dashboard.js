@@ -10,43 +10,43 @@ const DashboardModule = {
         const stats = FinanceModule.getStats();
         
         return `
-            <div class="flex justify-between items-center mb-8">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
                 <div>
-                    <h2 class="text-3xl font-bold">Дашборд</h2>
-                    <p class="text-gray-400 mt-1">Огляд роботи сервісу</p>
+                    <h2 class="text-2xl md:text-3xl font-bold">Дашборд</h2>
+                    <p class="text-gray-400 mt-1 text-sm md:text-base">Огляд роботи сервісу</p>
                 </div>
-                <button onclick="window.navigateTo('newOrder')" class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg transition-colors flex items-center gap-2">
+                <button onclick="window.navigateTo('newOrder')" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 px-6 py-3 md:py-2 rounded-lg transition-colors flex items-center justify-center gap-2 font-semibold touch-target">
                     <i class="fas fa-plus"></i> Нове замовлення
                 </button>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div class="glass p-6 rounded-xl border-l-4 border-blue-500">
-                    <div class="text-gray-400 text-sm">Активні замовлення</div>
-                    <div class="text-3xl font-bold mt-2">${active}</div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 mb-6 md:mb-8">
+                <div class="glass p-4 md:p-6 rounded-xl border-l-4 border-blue-500">
+                    <div class="text-gray-400 text-xs md:text-sm">Активні замовлення</div>
+                    <div class="text-2xl md:text-3xl font-bold mt-1 md:mt-2">${active}</div>
                 </div>
-                <div class="glass p-6 rounded-xl border-l-4 border-green-500">
-                    <div class="text-gray-400 text-sm">Готові до видачі</div>
-                    <div class="text-3xl font-bold mt-2">${ready}</div>
+                <div class="glass p-4 md:p-6 rounded-xl border-l-4 border-green-500">
+                    <div class="text-gray-400 text-xs md:text-sm">Готові до видачі</div>
+                    <div class="text-2xl md:text-3xl font-bold mt-1 md:mt-2">${ready}</div>
                 </div>
-                <div class="glass p-6 rounded-xl border-l-4 border-yellow-500">
-                    <div class="text-gray-400 text-sm">Виручка (міс.)</div>
-                    <div class="text-3xl font-bold mt-2">₴${stats.monthRevenue}</div>
+                <div class="glass p-4 md:p-6 rounded-xl border-l-4 border-yellow-500">
+                    <div class="text-gray-400 text-xs md:text-sm">Виручка (міс.)</div>
+                    <div class="text-xl md:text-3xl font-bold mt-1 md:mt-2 truncate" title="₴${stats.monthRevenue}">₴${stats.monthRevenue}</div>
                 </div>
-                <div class="glass p-6 rounded-xl border-l-4 border-purple-500">
-                    <div class="text-gray-400 text-sm">Клієнтів у базі</div>
-                    <div class="text-3xl font-bold mt-2">${Database.query('clients').length}</div>
+                <div class="glass p-4 md:p-6 rounded-xl border-l-4 border-purple-500">
+                    <div class="text-gray-400 text-xs md:text-sm">Клієнтів у базі</div>
+                    <div class="text-2xl md:text-3xl font-bold mt-1 md:mt-2">${Database.query('clients').length}</div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="glass p-6 rounded-xl">
-                    <h3 class="font-semibold mb-4">Статистика по типах пристроїв</h3>
-                    <canvas id="deviceChart" height="250"></canvas>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+                <div class="glass p-4 md:p-6 rounded-xl">
+                    <h3 class="font-semibold mb-4 text-sm md:text-base">Статистика по типах пристроїв</h3>
+                    <canvas id="deviceChart" height="200" class="max-h-[200px] md:max-h-[250px]"></canvas>
                 </div>
-                <div class="glass p-6 rounded-xl">
-                    <h3 class="font-semibold mb-4">Останні замовлення</h3>
-                    <div class="space-y-3 max-h-[300px] overflow-y-auto">
+                <div class="glass p-4 md:p-6 rounded-xl">
+                    <h3 class="font-semibold mb-4 text-sm md:text-base">Останні замовлення</h3>
+                    <div class="space-y-3 max-h-[280px] md:max-h-[300px] overflow-y-auto scroll-touch">
                         ${orders.slice(-6).reverse().map(o => {
                             const c = Database.find('clients', o.clientId);
                             const total = OrderModule.calculateTotal(o);

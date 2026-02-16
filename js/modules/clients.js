@@ -112,6 +112,10 @@ const ClientModule = {
 
     showHistory(clientId) {
         const client = Database.find('clients', clientId);
+        if (!client) {
+            window.Toast?.show('Клієнт не знайдений', 'error');
+            return;
+        }
         const orders = Database.findBy('orders', 'clientId', clientId);
         
         window.Modal.open(`

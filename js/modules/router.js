@@ -1,4 +1,5 @@
 import Auth from './auth.js';
+import Database from './database.js';
 import DashboardModule from './dashboard.js';
 import OrderModule from './orders.js';
 import InventoryModule from './inventory.js';
@@ -96,8 +97,9 @@ const Router = {
             ready: orders.filter(o => o.status === 'ready')
         };
 
+        const isMobile = window.innerWidth < 768;
         const colHtml = (title, items, color, bgColor) => `
-            <div class="flex-1 min-w-[280px] bg-gray-800/30 rounded-xl p-4 border border-gray-700">
+            <div class="flex-1 min-w-[280px] ${isMobile ? 'kanban-col min-w-[260px] max-w-[85vw]' : ''} bg-gray-800/30 rounded-xl p-4 border border-gray-700">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="font-semibold ${color}">${title}</h3>
                     <span class="bg-gray-700 text-xs px-2 py-1 rounded-full">${items.length}</span>
@@ -126,8 +128,8 @@ const Router = {
         `;
 
         document.getElementById('contentArea').innerHTML = `
-            <h2 class="text-3xl font-bold mb-6">Kanban дошка</h2>
-            <div class="flex gap-4 overflow-x-auto pb-4 items-start">
+            <h2 class="text-2xl md:text-3xl font-bold mb-4 md:mb-6">Kanban дошка</h2>
+            <div class="flex gap-4 overflow-x-auto pb-4 md:pb-4 items-start kanban-scroll scroll-touch">
                 ${colHtml('Нові', columns.new, 'text-gray-300', 'border-gray-600')}
                 ${colHtml('Діагностика', columns.diagnostic, 'text-yellow-400', 'border-yellow-500')}
                 ${colHtml('В ремонті', columns.in_repair, 'text-blue-400', 'border-blue-500')}

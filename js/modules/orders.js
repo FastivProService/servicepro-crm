@@ -121,11 +121,16 @@ const OrderModule = {
         
         if (isMobile) {
             return `
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-bold">Замовлення</h2>
-                    <span class="text-gray-400 text-sm">${orders.length} шт.</span>
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+                    <div class="flex justify-between items-center w-full sm:w-auto">
+                        <h2 class="text-xl font-bold">Замовлення</h2>
+                        <span class="text-gray-400 text-sm">${orders.length} шт.</span>
+                    </div>
+                    <button onclick="window.navigateTo('newOrder')" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors touch-target">
+                        <i class="fas fa-plus"></i> Нове замовлення
+                    </button>
                 </div>
-                <div class="space-y-3 pb-20">
+                <div class="space-y-3 pb-4">
                     ${orders.map(o => this.renderMobileCard(o)).join('')}
                 </div>
             `;
@@ -232,28 +237,28 @@ const OrderModule = {
     renderForm() {
         return `
             <div class="max-w-4xl fade-in">
-                <h2 class="text-3xl font-bold mb-6">Нове замовлення</h2>
-                <form onsubmit="window.submitNewOrder(event)" class="space-y-6">
-                    <div class="glass p-6 rounded-xl">
-                        <h3 class="font-semibold mb-4 text-blue-400"><i class="fas fa-user mr-2"></i>Клієнт</h3>
-                        <div class="grid grid-cols-2 gap-4">
+                <h2 class="text-2xl md:text-3xl font-bold mb-4 md:mb-6">Нове замовлення</h2>
+                <form onsubmit="window.submitNewOrder(event)" class="space-y-4 md:space-y-6">
+                    <div class="glass p-4 md:p-6 rounded-xl">
+                        <h3 class="font-semibold mb-3 md:mb-4 text-blue-400 text-sm md:text-base"><i class="fas fa-user mr-2"></i>Клієнт</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm text-gray-400 mb-2">Телефон *</label>
                                 <input type="tel" name="phone" required onblur="window.autoFillClient(this)"
-                                    class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none" placeholder="+380...">
+                                    class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 md:py-2 focus:border-blue-500 focus:outline-none text-base" placeholder="+380...">
                             </div>
                             <div>
                                 <label class="block text-sm text-gray-400 mb-2">ПІБ *</label>
                                 <input type="text" name="clientName" required
-                                    class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
+                                    class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 md:py-2 focus:border-blue-500 focus:outline-none text-base">
                             </div>
                         </div>
                     </div>
 
-                    <div class="glass p-6 rounded-xl">
-                        <h3 class="font-semibold mb-4 text-green-400"><i class="fas fa-laptop mr-2"></i>Пристрій</h3>
-                        <div class="grid grid-cols-3 gap-4 mb-4">
-                            <select name="deviceType" required class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
+                    <div class="glass p-4 md:p-6 rounded-xl">
+                        <h3 class="font-semibold mb-3 md:mb-4 text-green-400 text-sm md:text-base"><i class="fas fa-laptop mr-2"></i>Пристрій</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                            <select name="deviceType" required class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 md:py-2 focus:border-blue-500 focus:outline-none text-base">
                                 <option value="">Тип пристрою</option>
                                 <option value="laptop">Ноутбук</option>
                                 <option value="phone">Телефон</option>
@@ -261,21 +266,21 @@ const OrderModule = {
                                 <option value="printer">Принтер</option>
                                 <option value="tablet">Планшет</option>
                             </select>
-                            <input type="text" name="deviceBrand" placeholder="Бренд" required class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
-                            <input type="text" name="deviceModel" placeholder="Модель" required class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
+                            <input type="text" name="deviceBrand" placeholder="Бренд" required class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 md:py-2 focus:border-blue-500 focus:outline-none text-base">
+                            <input type="text" name="deviceModel" placeholder="Модель" required class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 md:py-2 focus:border-blue-500 focus:outline-none text-base">
                         </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <input type="text" name="deviceSerial" placeholder="S/N або IMEI" class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
-                            <input type="text" name="devicePassword" placeholder="Пароль від пристрою" class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <input type="text" name="deviceSerial" placeholder="S/N або IMEI" class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 md:py-2 focus:border-blue-500 focus:outline-none">
+                            <input type="text" name="devicePassword" placeholder="Пароль від пристрою" class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 md:py-2 focus:border-blue-500 focus:outline-none">
                         </div>
                     </div>
 
-                    <div class="glass p-6 rounded-xl">
-                        <h3 class="font-semibold mb-4 text-yellow-400"><i class="fas fa-file-alt mr-2"></i>Деталі</h3>
-                        <textarea name="issue" required rows="3" placeholder="Опис несправності..." class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 mb-4 focus:border-blue-500 focus:outline-none"></textarea>
-                        <div class="grid grid-cols-2 gap-4">
-                            <input type="number" name="prepayment" placeholder="Аванс (грн)" class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
-                            <select name="priority" class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 focus:border-blue-500 focus:outline-none">
+                    <div class="glass p-4 md:p-6 rounded-xl">
+                        <h3 class="font-semibold mb-3 md:mb-4 text-yellow-400 text-sm md:text-base"><i class="fas fa-file-alt mr-2"></i>Деталі</h3>
+                        <textarea name="issue" required rows="3" placeholder="Опис несправності..." class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 md:py-2 mb-4 focus:border-blue-500 focus:outline-none"></textarea>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <input type="number" name="prepayment" placeholder="Аванс (грн)" class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 md:py-2 focus:border-blue-500 focus:outline-none text-base">
+                            <select name="priority" class="bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 md:py-2 focus:border-blue-500 focus:outline-none text-base">
                                 <option value="normal">Звичайний пріоритет</option>
                                 <option value="high">Високий</option>
                                 <option value="urgent">Терміновий</option>
@@ -283,11 +288,11 @@ const OrderModule = {
                         </div>
                     </div>
 
-                    <div class="flex gap-4">
-                        <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition-colors">
+                    <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                        <button type="submit" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition-colors touch-target min-h-[48px]">
                             Створити замовлення
                         </button>
-                        <button type="button" onclick="window.navigateTo('orders')" class="px-6 py-3 border border-gray-600 rounded-lg hover:bg-gray-800 transition-colors">
+                        <button type="button" onclick="window.navigateTo('orders')" class="px-6 py-3 border border-gray-600 rounded-lg hover:bg-gray-800 transition-colors touch-target min-h-[48px]">
                             Скасувати
                         </button>
                     </div>
@@ -298,8 +303,8 @@ const OrderModule = {
 
     openDetail(id) {
         const order = Database.find('orders', id);
+        if (!order) return;
         const client = Database.find('clients', order.clientId);
-        if (!order || !client) return;
 
         this.currentOrder = order;
         const total = this.calculateTotal(order);
@@ -328,10 +333,10 @@ const OrderModule = {
                 <div class="grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-4 mb-6">
                     <div class="glass p-4 rounded-lg">
                         <div class="text-sm text-gray-400 mb-1">Клієнт</div>
-                        <div class="font-semibold">${client.name}</div>
-                        <a href="tel:${client.phone}" class="text-blue-400 text-sm flex items-center gap-1 mt-1">
+                        <div class="font-semibold">${client?.name || 'Клієнт не знайдений'}</div>
+                        ${client?.phone ? `<a href="tel:${client.phone}" class="text-blue-400 text-sm flex items-center gap-1 mt-1">
                             <i class="fas fa-phone"></i> ${client.phone}
-                        </a>
+                        </a>` : ''}
                     </div>
                     <div class="glass p-4 rounded-lg">
                         <div class="text-sm text-gray-400 mb-1">Пристрій</div>
@@ -475,6 +480,7 @@ const OrderModule = {
 
     printOrder(id) {
         const order = Database.find('orders', id);
+        if (!order) return;
         const client = Database.find('clients', order.clientId);
         const total = this.calculateTotal(order);
         
@@ -503,7 +509,7 @@ const OrderModule = {
                 
                 <div class="section">
                     <p><strong>Виконавець:</strong> ТОВ "ServicePro"</p>
-                    <p><strong>Замовник:</strong> ${client.name}, тел: ${client.phone}</p>
+                    <p><strong>Замовник:</strong> ${client?.name || '—'}, тел: ${client?.phone || '—'}</p>
                 </div>
                 
                 <div class="section">

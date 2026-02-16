@@ -12,7 +12,15 @@ const Database = {
     init() {
         const saved = localStorage.getItem('servicePro_v2');
         if (saved) {
-            this.data = JSON.parse(saved);
+            const parsed = JSON.parse(saved);
+            this.data = {
+                clients: parsed.clients ?? [],
+                orders: parsed.orders ?? [],
+                inventory: parsed.inventory ?? [],
+                services: parsed.services ?? [],
+                transactions: parsed.transactions ?? [],
+                user: parsed.user ?? null
+            };
         } else {
             this.seedData();
         }

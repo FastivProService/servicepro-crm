@@ -2,14 +2,16 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <meta name="theme-color" content="#0f172a">
     
     <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
     <title>ServicePro CRM</title>
     
+    <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
@@ -26,6 +28,9 @@
             font-family: 'Inter', sans-serif;
             touch-action: pan-y pinch-zoom;
             overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            padding-top: env(safe-area-inset-top);
+            min-height: 100dvh;
         }
         
         /* Mobile optimizations */
@@ -80,8 +85,10 @@
         }
         
         .mobile-nav {
-            @apply fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 flex justify-around items-center py-2 px-4 z-40;
+            @apply fixed bottom-0 left-0 right-0 bg-gray-900/98 border-t border-gray-800 flex justify-around items-center py-2 px-2 z-40;
             padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
         }
         
         .mobile-nav-item {
@@ -130,8 +137,8 @@
         
         <div id="sidebarOverlay" onclick="window.Sidebar.close()" class="fixed inset-0 bg-black/50 z-30 hidden transition-opacity opacity-0 md:hidden backdrop-blur-sm"></div>
 
-        <aside id="mainSidebar" class="fixed inset-y-0 left-0 w-64 bg-gray-800 border-r border-gray-700 flex flex-col z-40 transform transition-transform duration-300 -translate-x-full md:translate-x-0">
-            <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+        <aside id="mainSidebar" class="fixed inset-y-0 left-0 w-64 bg-gray-800 border-r border-gray-700 flex flex-col z-40 transform transition-transform duration-300 -translate-x-full md:translate-x-0 pt-[env(safe-area-inset-top)] md:pt-0">
+            <div class="p-4 md:p-6 border-b border-gray-700 flex justify-between items-center">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
                         <i class="fas fa-wrench text-white"></i>
@@ -153,25 +160,26 @@
             </div>
         </aside>
 
-        <header class="fixed top-0 left-0 right-0 bg-gray-800/95 backdrop-blur border-b border-gray-700 z-30 px-4 py-3 flex justify-between items-center transition-all duration-300" id="mainHeader">
+        <header class="fixed top-0 left-0 right-0 bg-gray-800/98 backdrop-blur-md border-b border-gray-700 z-30 px-4 py-3 flex justify-between items-center transition-all duration-300 pt-[max(0.75rem,env(safe-area-inset-top))]" id="mainHeader">
             <div class="flex items-center gap-3">
-                <button onclick="window.Sidebar.toggle()" class="text-gray-300 hover:text-white p-2 -ml-2 rounded-lg hover:bg-gray-700 transition-colors">
+                <button onclick="window.Sidebar.toggle()" class="text-gray-300 hover:text-white p-2.5 -ml-2 rounded-lg hover:bg-gray-700 transition-colors touch-target min-w-[44px] min-h-[44px] flex items-center justify-center">
                     <i class="fas fa-bars text-xl"></i>
                 </button>
-                <div class="flex items-center gap-2 md:hidden">
-                    <span class="font-bold">ServicePro</span>
+                <div class="flex items-center gap-2 md:hidden flex-1 min-w-0">
+                    <span class="font-bold truncate">ServicePro</span>
+                    <span class="text-xs text-gray-500 shrink-0" id="headerDateMobile"></span>
                 </div>
             </div>
             <div class="flex items-center gap-4">
                 <span class="text-sm text-gray-400 hidden md:block" id="headerDate"></span>
-                <button onclick="location.reload()" class="text-gray-400 hover:text-white p-2 transition-colors" title="Вийти">
+                <button onclick="location.reload()" class="text-gray-400 hover:text-white p-2.5 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-700 md:rounded" title="Вийти">
                     <i class="fas fa-sign-out-alt"></i>
                 </button>
             </div>
         </header>
 
         <main id="mainContainer" class="md:ml-64 pt-16 min-h-screen transition-all duration-300">
-            <div id="contentArea" class="p-4 md:p-8 max-w-7xl mx-auto"></div>
+            <div id="contentArea" class="p-4 md:p-8 max-w-7xl mx-auto pb-24 md:pb-8"></div>
         </main>
 
         <nav class="mobile-nav md:hidden">
@@ -196,7 +204,7 @@
     </div>
 
     <div id="modalOverlay" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-end md:items-center justify-center">
-        <div id="modalContent" class="bg-gray-800 w-full md:w-full md:max-w-2xl md:rounded-2xl rounded-t-2xl max-h-[90vh] overflow-y-auto border border-gray-700 shadow-2xl transform transition-transform duration-300 translate-y-full md:translate-y-0"></div>
+        <div id="modalContent" class="modal-mobile-content bg-gray-800 w-full md:w-full md:max-w-2xl md:rounded-2xl rounded-t-2xl max-h-[90vh] overflow-y-auto border border-gray-700 shadow-2xl transform transition-transform duration-300 translate-y-full md:translate-y-0"></div>
     </div>
 
     <script type="module" src="js/app.js"></script>
@@ -204,7 +212,11 @@
         setInterval(() => {
             const now = new Date();
             const el = document.getElementById('headerDate');
-            if(el) el.textContent = now.toLocaleDateString('uk-UA') + ' ' + now.toLocaleTimeString('uk-UA', {hour: '2-digit', minute:'2-digit'});
+            const elMob = document.getElementById('headerDateMobile');
+            const dateStr = now.toLocaleDateString('uk-UA') + ' ' + now.toLocaleTimeString('uk-UA', {hour: '2-digit', minute:'2-digit'});
+            const shortStr = now.toLocaleDateString('uk-UA', {day:'2-digit', month:'2-digit'});
+            if(el) el.textContent = dateStr;
+            if(elMob) elMob.textContent = shortStr;
         }, 1000);
     </script>
 </body>

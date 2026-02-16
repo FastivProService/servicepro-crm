@@ -84,8 +84,8 @@ const InventoryModule = {
 
     renderCard(item) {
         const lowStock = item.qty < 3;
-        const profit = item.price - item.cost;
-        const profitPercent = ((profit / item.cost) * 100).toFixed(0);
+        const profit = item.price - (item.cost || 0);
+        const profitPercent = item.cost > 0 ? ((profit / item.cost) * 100).toFixed(0) : '—';
         
         return `
             <div class="glass p-4 rounded-xl border ${lowStock ? 'border-red-500/50 bg-red-500/10' : 'border-gray-700'} transition-all hover:border-blue-500/50 relative group">

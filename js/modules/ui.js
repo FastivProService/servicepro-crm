@@ -54,7 +54,8 @@ const Toast = {
         };
         
         const div = document.createElement('div');
-        div.className = `fixed top-4 left-4 right-4 md:top-auto md:bottom-4 md:right-4 md:left-auto ${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2 text-sm md:text-base fade-in`;
+        const isMobile = window.innerWidth < 768;
+        div.className = `fixed ${isMobile ? 'top-4 left-4 right-4 mt-[env(safe-area-inset-top)]' : 'bottom-4 right-4 left-auto md:top-auto md:bottom-4 md:right-4 md:left-auto'} ${colors[type]} text-white px-4 py-3 rounded-lg shadow-lg z-[60] flex items-center gap-2 text-sm md:text-base fade-in max-w-[calc(100vw-2rem)]`;
         div.innerHTML = `
             <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
             <span>${message}</span>
