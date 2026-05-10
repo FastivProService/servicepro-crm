@@ -1,5 +1,8 @@
 # ServicePro CRM
 
+DEMO https://fastivproservice.github.io/servicepro-crm/
+
+
 Легка CRM-система для сервісного центру (frontend-only). Працює без бекенду: всі дані зберігаються локально в `localStorage`.
 
 ## Що вміє система
