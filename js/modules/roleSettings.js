@@ -4,10 +4,12 @@ import { Toast } from './ui.js';
 
 export const AVAILABLE_PERMISSIONS = [
     { id: 'all', label: 'Повний доступ' },
+    { id: 'audit', label: 'Аудит / журнал дій' },
     { id: 'orders', label: 'Замовлення' },
     { id: 'clients', label: 'Клієнти' },
     { id: 'inventory', label: 'Склад' },
     { id: 'services', label: 'Послуги' },
+    { id: 'salaries', label: 'Зарплати' },
     { id: 'finance', label: 'Фінанси' },
     { id: 'view', label: 'Перегляд' },
     { id: 'settings', label: 'Налаштування' }
@@ -21,12 +23,13 @@ export const AVAILABLE_MENU_ITEMS = [
     { id: 'services', label: 'Послуги' },
     { id: 'clients', label: 'Клієнти' },
     { id: 'finance', label: 'Фінанси' },
+    { id: 'salaries', label: 'Зарплати' },
     { id: 'settings', label: 'Налаштування' }
 ];
 
 const DEFAULT_ROLE_CONFIG = {
-    admin: { name: 'Адміністратор', permissions: ['all'], menu: ['dashboard', 'orders', 'kanban', 'inventory', 'services', 'clients', 'finance', 'settings'] },
-    manager: { name: 'Менеджер', permissions: ['orders', 'clients', 'view'], menu: ['dashboard', 'orders', 'kanban', 'clients', 'finance'] },
+    admin: { name: 'Адміністратор', permissions: ['all'], menu: ['dashboard', 'orders', 'kanban', 'inventory', 'services', 'clients', 'finance', 'salaries', 'settings'] },
+    manager: { name: 'Менеджер', permissions: ['orders', 'clients', 'view', 'finance'], menu: ['dashboard', 'orders', 'kanban', 'clients', 'finance', 'salaries'] },
     technician: { name: 'Майстер', permissions: ['orders', 'view'], menu: ['dashboard', 'orders', 'kanban', 'inventory'] }
 };
 

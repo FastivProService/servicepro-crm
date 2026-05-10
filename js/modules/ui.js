@@ -1,4 +1,7 @@
 const Modal = {
+    _popstateHandler: null,
+    _historyPushed: false,
+
     open(content) {
         const modal = document.getElementById('modalOverlay');
         const modalContent = document.getElementById('modalContent');
@@ -18,18 +21,32 @@ const Modal = {
             if (e.target === modal) this.close();
         };
         
-        window.history.pushState({modal: true}, '');
-        window.onpopstate = () => {
-            if (window.history.state?.modal) {
-                this.close();
-                window.history.back();
-            }
+        // Додаємо окремий state для модалки, щоб кнопка "Назад" її закривала
+        window.history.pushState({ modal: true }, '');
+        this._historyPushed = true;
+
+        // Не перезаписуємо глобальний onpopstate, а додаємо окремий обробник
+        this._popstateHandler = (event) => {
+            if (event.state?.modal) return;
+            this.close();
         };
+        window.addEventListener('popstate', this._popstateHandler, { once: true });
     },
     
     close() {
         const modal = document.getElementById('modalOverlay');
         const modalContent = document.getElementById('modalContent');
+
+        if (this._popstateHandler) {
+            window.removeEventListener('popstate', this._popstateHandler);
+            this._popstateHandler = null;
+        }
+
+        // Якщо закрили модалку кнопкою/кліком, прибираємо доданий state
+        if (this._historyPushed && window.history.state?.modal) {
+            this._historyPushed = false;
+            window.history.back();
+        }
         
         if (window.innerWidth < 768) {
             modalContent.style.transform = 'translateY(100%)';

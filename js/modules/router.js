@@ -6,18 +6,68 @@ import InventoryModule from './inventory.js';
 import ServiceModule from './services.js';
 import ClientModule from './clients.js';
 import FinanceModule from './finance.js';
+import SalariesModule from './salaries.js';
 import SettingsModule from './settings.js';
 import PrintEditorModule from './printEditor.js';
+import DocumentEditorModule from './documentEditor.js';
 import RoleSettingsModule from './roleSettings.js';
+import ActivityLogPage from './activityLogPage.js';
+import NotificationsModule from './notifications.js';
+import AdminConfigModule from './adminConfig.js';
+import UsersSettingsModule from './usersSettings.js';
+import StatusesSettingsModule from './statusesSettings.js';
 import { Modal } from './ui.js';
 
 const Router = {
     currentRoute: '',
 
+    moveOrderInKanban(orderId, targetStatusId) {
+        const order = Database.find('orders', Number(orderId));
+        if (!order || !targetStatusId || order.status === targetStatusId) return;
+        OrderModule.changeStatus(order.id, targetStatusId);
+        if (window.Toast) window.Toast.show(`Замовлення ${order.number} переміщено`, 'success');
+        this.navigate('kanban');
+    },
+
+    initKanbanDnD() {
+        const cards = document.querySelectorAll('[data-kanban-order-id]');
+        const cols = document.querySelectorAll('[data-kanban-status-id]');
+
+        cards.forEach(card => {
+            card.addEventListener('dragstart', (e) => {
+                const id = card.getAttribute('data-kanban-order-id');
+                if (!id) return;
+                e.dataTransfer.setData('text/plain', id);
+                e.dataTransfer.effectAllowed = 'move';
+                card.classList.add('opacity-50');
+            });
+            card.addEventListener('dragend', () => card.classList.remove('opacity-50'));
+        });
+
+        cols.forEach(col => {
+            col.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                col.classList.add('ring-2', 'ring-blue-500');
+            });
+            col.addEventListener('dragleave', () => col.classList.remove('ring-2', 'ring-blue-500'));
+            col.addEventListener('drop', (e) => {
+                e.preventDefault();
+                col.classList.remove('ring-2', 'ring-blue-500');
+                const orderId = e.dataTransfer.getData('text/plain');
+                const statusId = col.getAttribute('data-kanban-status-id');
+                if (orderId && statusId) this.moveOrderInKanban(orderId, statusId);
+            });
+        });
+    },
+
     navigate(route) {
         this.currentRoute = route;
         window.currentRoute = route;
         const content = document.getElementById('contentArea');
+        if (!content) {
+            console.error('contentArea не знайдено');
+            return;
+        }
 
         // Закриваємо модалку
         Modal.close();
@@ -54,6 +104,13 @@ const Router = {
                     content.innerHTML = `<div class="text-center py-20 text-gray-500">Немає доступу до фінансів</div>`;
                 }
                 break;
+            case 'salaries':
+                if (Auth.hasAccess('finance') || Auth.currentUser?.role === 'admin') {
+                    content.innerHTML = SalariesModule.render();
+                } else {
+                    content.innerHTML = `<div class="text-center py-20 text-gray-500">Немає доступу до модуля зарплат</div>`;
+                }
+                break;
             case 'kanban':
                 this.renderKanban();
                 break;
@@ -71,9 +128,51 @@ const Router = {
                     content.innerHTML = `<div class="text-center py-20 text-gray-500">Немає доступу</div>`;
                 }
                 break;
+            case 'documentEditor':
+                if (Auth.hasAccess('settings') || Auth.currentUser?.role === 'admin') {
+                    content.innerHTML = DocumentEditorModule.render();
+                } else {
+                    content.innerHTML = `<div class="text-center py-20 text-gray-500">Немає доступу</div>`;
+                }
+                break;
             case 'roleSettings':
                 if (Auth.hasAccess('settings') || Auth.currentUser?.role === 'admin') {
                     content.innerHTML = RoleSettingsModule.render();
+                } else {
+                    content.innerHTML = `<div class="text-center py-20 text-gray-500">Немає доступу</div>`;
+                }
+                break;
+            case 'activityLog':
+                if (Auth.hasAccess('settings') || Auth.currentUser?.role === 'admin') {
+                    content.innerHTML = ActivityLogPage.render();
+                } else {
+                    content.innerHTML = `<div class="text-center py-20 text-gray-500">Немає доступу</div>`;
+                }
+                break;
+            case 'adminConfig':
+                if (Auth.hasAccess('settings') || Auth.currentUser?.role === 'admin') {
+                    content.innerHTML = AdminConfigModule.render();
+                } else {
+                    content.innerHTML = `<div class="text-center py-20 text-gray-500">Немає доступу</div>`;
+                }
+                break;
+            case 'notifications':
+                if (Auth.hasAccess('settings') || Auth.currentUser?.role === 'admin') {
+                    content.innerHTML = NotificationsModule.render();
+                } else {
+                    content.innerHTML = `<div class="text-center py-20 text-gray-500">Немає доступу</div>`;
+                }
+                break;
+            case 'usersSettings':
+                if (Auth.hasAccess('settings') || Auth.currentUser?.role === 'admin') {
+                    content.innerHTML = UsersSettingsModule.render();
+                } else {
+                    content.innerHTML = `<div class="text-center py-20 text-gray-500">Немає доступу</div>`;
+                }
+                break;
+            case 'statusesSettings':
+                if (Auth.hasAccess('settings') || Auth.currentUser?.role === 'admin') {
+                    content.innerHTML = StatusesSettingsModule.render();
                 } else {
                     content.innerHTML = `<div class="text-center py-20 text-gray-500">Немає доступу</div>`;
                 }
@@ -88,7 +187,7 @@ const Router = {
     },
 
     updateActiveMenuItem(route) {
-        const effectiveRoute = (route === 'printEditor' || route === 'roleSettings') ? 'settings' : route;
+        const effectiveRoute = (route === 'printEditor' || route === 'documentEditor' || route === 'roleSettings' || route === 'activityLog' || route === 'notifications' || route === 'adminConfig' || route === 'usersSettings' || route === 'statusesSettings') ? 'settings' : route;
         // Десктоп
         document.querySelectorAll('#desktopNav button').forEach(btn => {
             const onclick = btn.getAttribute('onclick') || '';
@@ -115,16 +214,15 @@ const Router = {
 
     renderKanban() {
         const orders = Database.query('orders');
-        const columns = {
-            new: orders.filter(o => o.status === 'new'),
-            diagnostic: orders.filter(o => o.status === 'diagnostic'),
-            in_repair: orders.filter(o => o.status === 'in_repair'),
-            ready: orders.filter(o => o.status === 'ready')
-        };
+        const statuses = (Database.data?.orderStatuses || []).filter(s => !s.isFinal);
+        const columns = statuses.map(s => ({
+            ...s,
+            items: orders.filter(o => o.status === s.id)
+        }));
 
         const isMobile = window.innerWidth < 768;
-        const colHtml = (title, items, color, bgColor) => `
-            <div class="flex-1 min-w-[280px] ${isMobile ? 'kanban-col min-w-[260px] max-w-[85vw]' : ''} bg-gray-800/30 rounded-xl p-4 border border-gray-700">
+        const colHtml = (statusId, title, items, color, borderClass) => `
+            <div data-kanban-status-id="${statusId}" class="flex-1 min-w-[280px] ${isMobile ? 'kanban-col min-w-[260px] max-w-[85vw]' : ''} bg-gray-800/30 rounded-xl p-4 border border-gray-700 transition-shadow">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="font-semibold ${color}">${title}</h3>
                     <span class="bg-gray-700 text-xs px-2 py-1 rounded-full">${items.length}</span>
@@ -134,7 +232,7 @@ const Router = {
                         const c = Database.find('clients', o.clientId);
                         const total = OrderModule.calculateTotal(o);
                         return `
-                            <div class="bg-gray-800 p-3 rounded-lg border-l-4 ${bgColor} cursor-pointer hover:bg-gray-750 transition-all" onclick="window.openOrderDetail(${o.id})">
+                            <div data-kanban-order-id="${o.id}" draggable="true" class="bg-gray-800 p-3 rounded-lg border-l-4 ${borderClass || 'border-gray-600'} cursor-pointer hover:bg-gray-750 transition-all" onclick="window.openOrderDetail(${o.id})">
                                 <div class="flex justify-between items-start mb-1">
                                     <span class="text-xs font-mono text-blue-400 font-bold">${o.number}</span>
                                     <span class="text-xs text-gray-500">${new Date(o.createdAt).toLocaleDateString()}</span>
@@ -155,17 +253,15 @@ const Router = {
         document.getElementById('contentArea').innerHTML = `
             <h2 class="text-2xl md:text-3xl font-bold mb-4 md:mb-6">Kanban дошка</h2>
             <div class="flex gap-4 overflow-x-auto pb-4 md:pb-4 items-start kanban-scroll scroll-touch">
-                ${colHtml('Нові', columns.new, 'text-gray-300', 'border-gray-600')}
-                ${colHtml('Діагностика', columns.diagnostic, 'text-yellow-400', 'border-yellow-500')}
-                ${colHtml('В ремонті', columns.in_repair, 'text-blue-400', 'border-blue-500')}
-                ${colHtml('Готові', columns.ready, 'text-green-400', 'border-green-500')}
+                ${columns.map(c => colHtml(c.id, c.name, c.items, (c.colorClass || '').split(' ').find(x => x.startsWith('text-')) || 'text-gray-300', c.borderClass)).join('')}
             </div>
         `;
+        this.initKanbanDnD();
     },
 
     initNavigation() {
         const nav = document.getElementById('desktopNav');
-        const menuItems = Auth.getMenu();
+        const menuItems = (Auth.getMenu() || []).filter(item => item !== 'documentEditor');
 
         const icons = {
             dashboard: 'fa-chart-line',
@@ -175,6 +271,9 @@ const Router = {
             services: 'fa-list-alt',
             clients: 'fa-users',
             finance: 'fa-wallet',
+            salaries: 'fa-money-check-dollar',
+            activityLog: 'fa-history',
+            documentEditor: 'fa-file-alt',
             settings: 'fa-cog'
         };
 
@@ -185,6 +284,9 @@ const Router = {
             services: 'text-cyan-400',
             clients: 'text-green-400',
             finance: 'text-emerald-400',
+            salaries: 'text-lime-400',
+            activityLog: 'text-indigo-400',
+            documentEditor: 'text-blue-400',
             settings: 'text-amber-400'
         };
 
@@ -206,6 +308,9 @@ const Router = {
             services: 'Послуги',
             clients: 'Клієнти',
             finance: 'Фінанси',
+            salaries: 'Зарплати',
+            activityLog: 'Журнал дій',
+            documentEditor: 'Редактор документів',
             settings: 'Налаштування'
         };
         return map[route] || route;
