@@ -2,6 +2,8 @@
 
 Фронтенд CRM-система для сервісного центру. Дані зберігаються в `localStorage`, бекенд не потрібен.
 
+DEMO https://fastivproservice.github.io/servicepro-crm/
+
 ## Технології
 
 - HTML, CSS, JavaScript (ES модулі)
